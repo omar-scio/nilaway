@@ -40,7 +40,6 @@ type primitiveFullTrigger struct {
 
 func fullTriggerAsPrimitive(pass *analysis.Pass, trigger annotation.FullTrigger) primitiveFullTrigger {
 	producer, consumer := trigger.Prestrings(pass)
-
 	return primitiveFullTrigger{
 		ProducerRepr: producer,
 		ConsumerRepr: consumer,
