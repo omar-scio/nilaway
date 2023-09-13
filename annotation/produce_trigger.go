@@ -621,6 +621,32 @@ func (f FldReturnPrestring) String() string {
 	return fmt.Sprintf("field `%s` of result %d of `%s()`", f.FieldName, f.RetNum, f.FuncName)
 }
 
+// FldReturn is used when a struct field value is determined to flow from a return value of a function
+type FldReturn struct {
+	TriggerIfNilable
+}
+
+func (f FldReturn) String() string {
+	return f.Prestring().String()
+}
+
+// Prestring returns this FldReturn as a Prestring
+func (f FldReturn) Prestring() Prestring {
+	key := f.Ann.(RetFieldAnnotationKey)
+	return FldReturnPrestring{key.RetNum, key.FuncDecl.Name(), key.FieldDecl.Name()}
+}
+
+// FldReturnPrestring is a Prestring storing the needed information to compactly encode a FldReturn
+type FldReturnPrestring struct {
+	RetNum    int
+	FuncName  string
+	FieldName string
+}
+
+func (f FldReturnPrestring) String() string {
+	return fmt.Sprintf("field `%s` of result %d of `%s()`", f.FieldName, f.RetNum, f.FuncName)
+}
+
 // FuncReturn is used when a value is determined to flow from the return of a function. This
 // consumer trigger can be used on top of two different sites: RetAnnotationKey &
 // CallSiteRetAnnotationKey. RetAnnotationKey is the parameter site in the function declaration;
