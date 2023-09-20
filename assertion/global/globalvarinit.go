@@ -39,7 +39,7 @@ func analyzeValueSpec(pass *analysis.Pass, spec *ast.ValueSpec) []annotation.Ful
 		// All the variables in this case have same type
 		if len(spec.Values) == 0 {
 			prod = &annotation.ProduceTrigger{
-				Annotation: annotation.ProduceTriggerTautology{},
+				Annotation: &annotation.ProduceTriggerTautology{},
 				Expr:       ident,
 			}
 		} else if len(spec.Names) == len(spec.Values) {
@@ -71,9 +71,9 @@ func getGlobalConsumers(pass *analysis.Pass, valspec *ast.ValueSpec) []*annotati
 		if !util.TypeBarsNilness(util.TypeOf(pass, name)) && !util.IsEmptyExpr(name) {
 			v := pass.TypesInfo.ObjectOf(name).(*types.Var)
 			consumers[i] = &annotation.ConsumeTrigger{
-				Annotation: annotation.GlobalVarAssign{
-					TriggerIfNonNil: annotation.TriggerIfNonNil{
-						Ann: annotation.GlobalVarAnnotationKey{
+				Annotation: &annotation.GlobalVarAssign{
+					TriggerIfNonNil: &annotation.TriggerIfNonNil{
+						Ann: &annotation.GlobalVarAnnotationKey{
 							VarDecl: v,
 						}}},
 				Expr:         name,
@@ -106,7 +106,7 @@ func getGlobalProducer(pass *analysis.Pass, valspec *ast.ValueSpec, lid int, rid
 		// if rhs is literal nil
 		if rhs.Name == "nil" {
 			prod = &annotation.ProduceTrigger{
-				Annotation: annotation.ConstNil{},
+				Annotation: &annotation.ConstNil{},
 				Expr:       rhs,
 			}
 		} else {
@@ -124,9 +124,9 @@ func getProducerForVar(pass *analysis.Pass, rhs *ast.Ident, prod *annotation.Pro
 	rhsVar := pass.TypesInfo.ObjectOf(rhs).(*types.Var)
 	if annotation.VarIsGlobal(rhsVar) {
 		prod = &annotation.ProduceTrigger{
-			Annotation: annotation.GlobalVarRead{
-				TriggerIfNilable: annotation.TriggerIfNilable{
-					Ann: annotation.GlobalVarAnnotationKey{
+			Annotation: &annotation.GlobalVarRead{
+				TriggerIfNilable: &annotation.TriggerIfNilable{
+					Ann: &annotation.GlobalVarAnnotationKey{
 						VarDecl: rhsVar,
 					}}},
 			Expr: rhs,
@@ -138,9 +138,9 @@ func getProducerForVar(pass *analysis.Pass, rhs *ast.Ident, prod *annotation.Pro
 func getProducerForField(pass *analysis.Pass, rhs *ast.Ident) *annotation.ProduceTrigger {
 	rhsVar := pass.TypesInfo.ObjectOf(rhs).(*types.Var)
 	prod := &annotation.ProduceTrigger{
-		Annotation: annotation.FldRead{
-			TriggerIfNilable: annotation.TriggerIfNilable{
-				Ann: annotation.FieldAnnotationKey{
+		Annotation: &annotation.FldRead{
+			TriggerIfNilable: &annotation.TriggerIfNilable{
+				Ann: &annotation.FieldAnnotationKey{
 					FieldDecl: rhsVar,
 				}}},
 		Expr: rhs,
@@ -161,8 +161,8 @@ func getProducerForFuncCall(pass *analysis.Pass, methName *ast.Ident, lid int, r
 	retKey := annotation.RetKeyFromRetNum(fdecl, lid-rid)
 
 	prod := &annotation.ProduceTrigger{
-		Annotation: annotation.FuncReturn{
-			TriggerIfNilable: annotation.TriggerIfNilable{Ann: retKey},
+		Annotation: &annotation.FuncReturn{
+			TriggerIfNilable: &annotation.TriggerIfNilable{Ann: retKey},
 			Guarded:          false,
 		},
 		Expr: rhs,
@@ -183,8 +183,8 @@ func getProducerForMethodCall(pass *analysis.Pass, methName *ast.Ident, lid int,
 	retKey := annotation.RetKeyFromRetNum(mdecl, lid-rid)
 
 	prod := &annotation.ProduceTrigger{
-		Annotation: annotation.MethodReturn{
-			TriggerIfNilable: annotation.TriggerIfNilable{Ann: retKey},
+		Annotation: &annotation.MethodReturn{
+			TriggerIfNilable: &annotation.TriggerIfNilable{Ann: retKey},
 		},
 		Expr: rhs,
 	}

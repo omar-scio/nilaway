@@ -126,11 +126,11 @@ func (pk CallSiteParamAnnotationKey) ParamNameString() string {
 // NewCallSiteParamKey returns a new instance of CallSiteParamAnnotationKey constructed along with
 // validation that its passed argument number is valid for the passed function declaration.
 func NewCallSiteParamKey(
-	fdecl *types.Func, num int, location token.Position) CallSiteParamAnnotationKey {
+	fdecl *types.Func, num int, location token.Position) *CallSiteParamAnnotationKey {
 	sig := fdecl.Type().(*types.Signature)
 	// for variadic functions - "round down" their argument number to the variadic arg
 	if sig.Variadic() && num >= sig.Params().Len()-1 {
-		return CallSiteParamAnnotationKey{
+		return &CallSiteParamAnnotationKey{
 			FuncDecl: fdecl,
 			ParamNum: sig.Params().Len() - 1,
 			Location: location,
@@ -143,7 +143,7 @@ func NewCallSiteParamKey(
 			"no such parameter number %d - out of bounds for function %s with %d parameters",
 			sig.Params().Len(), fdecl.Name(), num))
 	}
-	return CallSiteParamAnnotationKey{
+	return &CallSiteParamAnnotationKey{
 		FuncDecl: fdecl,
 		ParamNum: num,
 		Location: location,
@@ -165,11 +165,11 @@ func (pk ParamAnnotationKey) ParamName() *types.Var {
 
 // ParamKeyFromArgNum returns a new instance of ParamAnnotationKey constructed along with validation
 // that its passed argument number is valid for the passed function declaration
-func ParamKeyFromArgNum(fdecl *types.Func, num int) ParamAnnotationKey {
+func ParamKeyFromArgNum(fdecl *types.Func, num int) *ParamAnnotationKey {
 	sig := fdecl.Type().(*types.Signature)
 	// for variadic functions - "round down" their argument number to the variadic arg
 	if sig.Variadic() && num >= sig.Params().Len()-1 {
-		return ParamAnnotationKey{
+		return &ParamAnnotationKey{
 			FuncDecl: fdecl,
 			ParamNum: sig.Params().Len() - 1,
 		}
@@ -179,19 +179,19 @@ func ParamKeyFromArgNum(fdecl *types.Func, num int) ParamAnnotationKey {
 	if sig.Params().Len() <= num {
 		panic(fmt.Sprintf("no such parameter number %d - out of bounds for function %s with %d parameters", sig.Params().Len(), fdecl.Name(), num))
 	}
-	return ParamAnnotationKey{
+	return &ParamAnnotationKey{
 		FuncDecl: fdecl,
 		ParamNum: num,
 	}
 }
 
 // ParamKeyFromName returns a new instance of ParamAnnotationKey constructed from the name of the parameter
-func ParamKeyFromName(fdecl *types.Func, paramName *types.Var) ParamAnnotationKey {
+func ParamKeyFromName(fdecl *types.Func, paramName *types.Var) *ParamAnnotationKey {
 	sig := fdecl.Type().(*types.Signature)
 
 	for i := 0; i < sig.Params().Len(); i++ {
 		if sig.Params().At(i) == paramName {
-			return ParamAnnotationKey{
+			return &ParamAnnotationKey{
 				FuncDecl: fdecl,
 				ParamNum: i,
 			}
@@ -274,8 +274,8 @@ func (rk CallSiteRetAnnotationKey) String() string {
 
 // NewCallSiteRetKey returns a new instance of CallSiteRetAnnotationKey constructed from the name
 // of the parameter.
-func NewCallSiteRetKey(fdecl *types.Func, retNum int, location token.Position) CallSiteRetAnnotationKey {
-	return CallSiteRetAnnotationKey{
+func NewCallSiteRetKey(fdecl *types.Func, retNum int, location token.Position) *CallSiteRetAnnotationKey {
+	return &CallSiteRetAnnotationKey{
 		FuncDecl: fdecl,
 		RetNum:   retNum,
 		Location: location,
@@ -307,8 +307,8 @@ func (rk RetAnnotationKey) String() string {
 }
 
 // RetKeyFromRetNum returns a new instance of RetAnnotationKey constructed from the name of the parameter
-func RetKeyFromRetNum(fdecl *types.Func, retNum int) RetAnnotationKey {
-	return RetAnnotationKey{
+func RetKeyFromRetNum(fdecl *types.Func, retNum int) *RetAnnotationKey {
+	return &RetAnnotationKey{
 		FuncDecl: fdecl,
 		RetNum:   retNum,
 	}

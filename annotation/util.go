@@ -27,11 +27,11 @@ import (
 func DeepNilabilityAsNamedType(typ types.Type) ProducingAnnotationTrigger {
 	t, ok := typ.(*types.Named)
 	if !ok {
-		return ProduceTriggerNever{}
+		return &ProduceTriggerNever{}
 	}
 
-	nameAsDeepTrigger := func(name *types.TypeName) TriggerIfDeepNilable {
-		return TriggerIfDeepNilable{Ann: TypeNameAnnotationKey{TypeDecl: name}}
+	nameAsDeepTrigger := func(name *types.TypeName) *TriggerIfDeepNilable {
+		return &TriggerIfDeepNilable{Ann: &TypeNameAnnotationKey{TypeDecl: name}}
 	}
 
 	// Calling Underlying on [types.Named] will always return the unnamed type, so we
@@ -39,21 +39,21 @@ func DeepNilabilityAsNamedType(typ types.Type) ProducingAnnotationTrigger {
 	// See [https://github.com/golang/example/tree/master/gotypes#named-types].
 	switch t.Underlying().(type) {
 	case *types.Slice:
-		return SliceRead{TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj())}
+		return &SliceRead{TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj())}
 	case *types.Array:
-		return ArrayRead{TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj())}
+		return &ArrayRead{TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj())}
 	case *types.Map:
-		return MapRead{
+		return &MapRead{
 			TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj()),
 			NeedsGuard:           true,
 		}
 	case *types.Pointer:
-		return PtrRead{TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj())}
+		return &PtrRead{TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj())}
 	case *types.Chan:
-		return ChanRecv{TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj())}
+		return &ChanRecv{TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj())}
 	}
 
-	return ProduceTriggerNever{}
+	return &ProduceTriggerNever{}
 }
 
 // DeepNilabilityOfFuncRet inspects a function return for deep nilability annotation
@@ -61,8 +61,8 @@ func DeepNilabilityOfFuncRet(fn *types.Func, retNum int) ProducingAnnotationTrig
 	fsig := fn.Type().(*types.Signature)
 	retType := fsig.Results().At(retNum).Type()
 	if util.TypeIsDeep(retType) {
-		return FuncReturnDeep{
-			TriggerIfDeepNilable: TriggerIfDeepNilable{
+		return &FuncReturnDeep{
+			TriggerIfDeepNilable: &TriggerIfDeepNilable{
 				Ann: RetKeyFromRetNum(fn, retNum)},
 			NeedsGuard: util.TypeIsDeeplyMap(retType)}
 	}
@@ -73,9 +73,9 @@ func DeepNilabilityOfFuncRet(fn *types.Func, retNum int) ProducingAnnotationTrig
 func DeepNilabilityOfFld(fld *types.Var) ProducingAnnotationTrigger {
 	if util.TypeIsDeep(fld.Type()) {
 		// in this case, the deep nilability of the field comes from its declaring annotations
-		return FldReadDeep{
-			TriggerIfDeepNilable: TriggerIfDeepNilable{
-				Ann: FieldAnnotationKey{
+		return &FldReadDeep{
+			TriggerIfDeepNilable: &TriggerIfDeepNilable{
+				Ann: &FieldAnnotationKey{
 					FieldDecl: fld}},
 			NeedsGuard: util.TypeIsDeeplyMap(fld.Type())}
 	}
@@ -88,9 +88,9 @@ func DeepNilabilityOfVar(fdecl *types.Func, v *types.Var) ProducingAnnotationTri
 		// in each of the following cases, the deep nilability of the variable comes from its
 		// declaring annotations
 		if VarIsGlobal(v) {
-			return GlobalVarReadDeep{
-				TriggerIfDeepNilable: TriggerIfDeepNilable{
-					Ann: GlobalVarAnnotationKey{
+			return &GlobalVarReadDeep{
+				TriggerIfDeepNilable: &TriggerIfDeepNilable{
+					Ann: &GlobalVarAnnotationKey{
 						VarDecl: v,
 					}},
 				NeedsGuard: util.TypeIsDeeplyMap(v.Type())}
@@ -99,14 +99,14 @@ func DeepNilabilityOfVar(fdecl *types.Func, v *types.Var) ProducingAnnotationTri
 			return paramAsDeepProducer(fdecl, v)
 		}
 		if VarIsRecv(fdecl, v) {
-			return MethodRecvDeep{
-				TriggerIfDeepNilable: TriggerIfDeepNilable{
-					Ann: RecvAnnotationKey{FuncDecl: fdecl}},
+			return &MethodRecvDeep{
+				TriggerIfDeepNilable: &TriggerIfDeepNilable{
+					Ann: &RecvAnnotationKey{FuncDecl: fdecl}},
 				VarDecl: v,
 			}
 		}
 		// in this case, the deep nilability of the variable is dependent only on its possible guarding
-		return LocalVarReadDeep{
+		return &LocalVarReadDeep{
 			ReadVar:    v,
 			NeedsGuard: util.TypeIsDeeplyMap(v.Type())}
 	}
@@ -164,10 +164,10 @@ func ParamAsProducer(fdecl *types.Func, param *types.Var) ProducingAnnotationTri
 		panic(fmt.Sprintf("non-param %s passed to ParamAsProducer", param.Name()))
 	}
 	if VarIsVariadicParam(fdecl, param) {
-		return VariadicFuncParam{VarDecl: param}
+		return &VariadicFuncParam{VarDecl: param}
 	}
-	return FuncParam{
-		TriggerIfNilable: TriggerIfNilable{
+	return &FuncParam{
+		TriggerIfNilable: &TriggerIfNilable{
 			Ann: ParamKeyFromName(fdecl, param)}}
 }
 
@@ -183,13 +183,13 @@ func paramAsDeepProducer(fdecl *types.Func, param *types.Var) ProducingAnnotatio
 	paramKey := ParamKeyFromName(fdecl, param)
 
 	if VarIsVariadicParam(fdecl, param) {
-		return VariadicFuncParamDeep{
-			TriggerIfNilable: TriggerIfNilable{
+		return &VariadicFuncParamDeep{
+			TriggerIfNilable: &TriggerIfNilable{
 				Ann: paramKey},
 			NeedsGuard: util.TypeIsDeeplyMap(param.Type())}
 	}
-	return FuncParamDeep{
-		TriggerIfDeepNilable: TriggerIfDeepNilable{
+	return &FuncParamDeep{
+		TriggerIfDeepNilable: &TriggerIfDeepNilable{
 			Ann: paramKey},
 		NeedsGuard: util.TypeIsDeeplyMap(param.Type())}
 }
@@ -198,8 +198,8 @@ func paramAsDeepProducer(fdecl *types.Func, param *types.Var) ProducingAnnotatio
 // This function is called from multiple places where funcDecl could be the declaration of the function being analyzed
 // (when looking at a return statement) or a function called from the function being analyzed
 // (when looking at a function call statement, in which case funcDecl is the callee).
-func NewRetFldAnnKey(funcDecl *types.Func, retNum int, fieldDecl *types.Var) RetFieldAnnotationKey {
-	return RetFieldAnnotationKey{
+func NewRetFldAnnKey(funcDecl *types.Func, retNum int, fieldDecl *types.Var) *RetFieldAnnotationKey {
+	return &RetFieldAnnotationKey{
 		FuncDecl:  funcDecl,
 		RetNum:    retNum,
 		FieldDecl: fieldDecl,
@@ -207,8 +207,8 @@ func NewRetFldAnnKey(funcDecl *types.Func, retNum int, fieldDecl *types.Var) Ret
 }
 
 // NewParamFldAnnKey returns ParamFieldAnnotationKey for a field fieldDecl of param at index of the function funcObj
-func NewParamFldAnnKey(funcObj *types.Func, index int, fieldDecl *types.Var) ParamFieldAnnotationKey {
-	return ParamFieldAnnotationKey{
+func NewParamFldAnnKey(funcObj *types.Func, index int, fieldDecl *types.Var) *ParamFieldAnnotationKey {
+	return &ParamFieldAnnotationKey{
 		FuncDecl:  funcObj,
 		ParamNum:  index,
 		FieldDecl: fieldDecl,
@@ -216,8 +216,8 @@ func NewParamFldAnnKey(funcObj *types.Func, index int, fieldDecl *types.Var) Par
 }
 
 // NewEscapeFldAnnKey returns a new EscapeFieldAnnotationKey for field fieldObj
-func NewEscapeFldAnnKey(fieldObj *types.Var) EscapeFieldAnnotationKey {
-	return EscapeFieldAnnotationKey{
+func NewEscapeFldAnnKey(fieldObj *types.Var) *EscapeFieldAnnotationKey {
+	return &EscapeFieldAnnotationKey{
 		FieldDecl: fieldObj,
 	}
 }

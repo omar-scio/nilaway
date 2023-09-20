@@ -118,7 +118,7 @@ func backpropAcrossNode(rootNode *RootAssertionNode, node ast.Node) error {
 func backpropAcrossSend(rootNode *RootAssertionNode, node *ast.SendStmt) error {
 	// Added this consumer since sending over a nil channel can cause panic
 	rootNode.AddConsumption(&annotation.ConsumeTrigger{
-		Annotation: annotation.ChanAccess{},
+		Annotation: &annotation.ChanAccess{},
 		Expr:       node.Chan,
 		Guards:     util.NoGuards(),
 	})
@@ -212,8 +212,8 @@ func backpropAcrossReturn(rootNode *RootAssertionNode, node *ast.ReturnStmt) err
 								Expr:       call,
 							},
 							Consumer: &annotation.ConsumeTrigger{
-								Annotation: annotation.UseAsReturn{
-									TriggerIfNonNil: annotation.TriggerIfNonNil{
+								Annotation: &annotation.UseAsReturn{
+									TriggerIfNonNil: &annotation.TriggerIfNonNil{
 										Ann: annotation.RetKeyFromRetNum(
 											rootNode.ObjectOf(rootNode.FuncNameIdent()).(*types.Func),
 											i,
@@ -454,7 +454,7 @@ func backpropAcrossTypeSwitch(rootNode *RootAssertionNode, lhs *ast.Ident, rhs a
 					case 0:
 						// lhsVal expression will never be nil here because rhsVal will never be nil
 						rootNode.triggerProductions(liftedChild, &annotation.ProduceTrigger{
-							Annotation: annotation.ProduceTriggerNever{},
+							Annotation: &annotation.ProduceTriggerNever{},
 							Expr:       lhs,
 						})
 					case 1:
@@ -587,7 +587,7 @@ buildShadowMask:
 					case 0:
 						// lhsVal expression will never be nil here because rhsVal will never be nil
 						rootNode.AddProduction(&annotation.ProduceTrigger{
-							Annotation: annotation.ProduceTriggerNever{},
+							Annotation: &annotation.ProduceTriggerNever{},
 							Expr:       lhsVal,
 						})
 					case 1:
