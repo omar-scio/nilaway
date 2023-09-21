@@ -120,7 +120,7 @@ type PtrLoad struct {
 }
 
 // Prestring returns this PtrLoad as a Prestring
-func (p PtrLoad) Prestring() Prestring {
+func (p *PtrLoad) Prestring() Prestring {
 	return PtrLoadPrestring{}
 }
 
@@ -139,7 +139,7 @@ type MapAccess struct {
 }
 
 // Prestring returns this MapAccess as a Prestring
-func (i MapAccess) Prestring() Prestring {
+func (i *MapAccess) Prestring() Prestring {
 	return MapAccessPrestring{}
 }
 
@@ -157,7 +157,7 @@ type MapWrittenTo struct {
 }
 
 // Prestring returns this MapWrittenTo as a Prestring
-func (m MapWrittenTo) Prestring() Prestring {
+func (m *MapWrittenTo) Prestring() Prestring {
 	return MapWrittenToPrestring{}
 }
 
@@ -174,7 +174,7 @@ type SliceAccess struct {
 }
 
 // Prestring returns this SliceAccess as a Prestring
-func (s SliceAccess) Prestring() Prestring {
+func (s *SliceAccess) Prestring() Prestring {
 	return SliceAccessPrestring{}
 }
 
@@ -193,7 +193,7 @@ type FldAccess struct {
 }
 
 // Prestring returns this FldAccess as a Prestring
-func (f FldAccess) Prestring() Prestring {
+func (f *FldAccess) Prestring() Prestring {
 	fieldName, methodName := "", ""
 	switch t := f.Sel.(type) {
 	case *types.Var:
@@ -232,8 +232,8 @@ type UseAsErrorResult struct {
 }
 
 // Prestring returns this UseAsErrorResult as a Prestring
-func (u UseAsErrorResult) Prestring() Prestring {
-	retAnn := u.Ann.(RetAnnotationKey)
+func (u *UseAsErrorResult) Prestring() Prestring {
+	retAnn := u.Ann.(*RetAnnotationKey)
 	return UseAsErrorResultPrestring{
 		Pos:              retAnn.RetNum,
 		ReturningFuncStr: retAnn.FuncDecl.Name(),
@@ -271,8 +271,8 @@ type FldAssign struct {
 }
 
 // Prestring returns this FldAssign as a Prestring
-func (f FldAssign) Prestring() Prestring {
-	fldAnn := f.Ann.(FieldAnnotationKey)
+func (f *FldAssign) Prestring() Prestring {
+	fldAnn := f.Ann.(*FieldAnnotationKey)
 	return FldAssignPrestring{
 		FieldName: fldAnn.FieldDecl.Name(),
 	}
@@ -338,8 +338,8 @@ type GlobalVarAssign struct {
 }
 
 // Prestring returns this GlobalVarAssign as a Prestring
-func (g GlobalVarAssign) Prestring() Prestring {
-	varAnn := g.Ann.(GlobalVarAnnotationKey)
+func (g *GlobalVarAssign) Prestring() Prestring {
+	varAnn := g.Ann.(*GlobalVarAnnotationKey)
 	return GlobalVarAssignPrestring{
 		VarName: varAnn.VarDecl.Name(),
 	}
@@ -365,15 +365,15 @@ type ArgPass struct {
 }
 
 // Prestring returns this ArgPass as a Prestring
-func (a ArgPass) Prestring() Prestring {
+func (a *ArgPass) Prestring() Prestring {
 	switch key := a.Ann.(type) {
-	case ParamAnnotationKey:
+	case *ParamAnnotationKey:
 		return ArgPassPrestring{
 			ParamName: key.MinimalString(),
 			FuncName:  key.FuncDecl.Name(),
 			Location:  "",
 		}
-	case CallSiteParamAnnotationKey:
+	case *CallSiteParamAnnotationKey:
 		return ArgPassPrestring{
 			ParamName: key.MinimalString(),
 			FuncName:  key.FuncDecl.Name(),
@@ -410,8 +410,8 @@ type RecvPass struct {
 }
 
 // Prestring returns this RecvPass as a Prestring
-func (a RecvPass) Prestring() Prestring {
-	recvAnn := a.Ann.(RecvAnnotationKey)
+func (a *RecvPass) Prestring() Prestring {
+	recvAnn := a.Ann.(*RecvAnnotationKey)
 	return RecvPassPrestring{
 		FuncName: recvAnn.FuncDecl.Name(),
 	}
@@ -433,8 +433,8 @@ type InterfaceResultFromImplementation struct {
 }
 
 // Prestring returns this InterfaceResultFromImplementation as a Prestring
-func (i InterfaceResultFromImplementation) Prestring() Prestring {
-	retAnn := i.Ann.(RetAnnotationKey)
+func (i *InterfaceResultFromImplementation) Prestring() Prestring {
+	retAnn := i.Ann.(*RetAnnotationKey)
 	return InterfaceResultFromImplementationPrestring{
 		retAnn.RetNum,
 		util.PartiallyQualifiedFuncName(retAnn.FuncDecl),
@@ -461,8 +461,8 @@ type MethodParamFromInterface struct {
 }
 
 // Prestring returns this MethodParamFromInterface as a Prestring
-func (m MethodParamFromInterface) Prestring() Prestring {
-	paramAnn := m.Ann.(ParamAnnotationKey)
+func (m *MethodParamFromInterface) Prestring() Prestring {
+	paramAnn := m.Ann.(*ParamAnnotationKey)
 	return MethodParamFromInterfacePrestring{
 		paramAnn.ParamNameString(),
 		util.PartiallyQualifiedFuncName(paramAnn.FuncDecl),
@@ -512,9 +512,9 @@ type UseAsReturn struct {
 }
 
 // Prestring returns this UseAsReturn as a Prestring
-func (u UseAsReturn) Prestring() Prestring {
+func (u *UseAsReturn) Prestring() Prestring {
 	switch key := u.Ann.(type) {
-	case RetAnnotationKey:
+	case *RetAnnotationKey:
 		return UseAsReturnPrestring{
 			key.FuncDecl.Name(),
 			key.RetNum,
@@ -522,7 +522,7 @@ func (u UseAsReturn) Prestring() Prestring {
 			key.FuncDecl.Type().(*types.Signature).Results().At(key.RetNum).Name(),
 			"",
 		}
-	case CallSiteRetAnnotationKey:
+	case *CallSiteRetAnnotationKey:
 		return UseAsReturnPrestring{
 			key.FuncDecl.Name(),
 			key.RetNum,
@@ -576,8 +576,8 @@ type UseAsFldOfReturn struct {
 }
 
 // Prestring returns this UseAsFldOfReturn as a Prestring
-func (u UseAsFldOfReturn) Prestring() Prestring {
-	retAnn := u.Ann.(RetFieldAnnotationKey)
+func (u *UseAsFldOfReturn) Prestring() Prestring {
+	retAnn := u.Ann.(*RetFieldAnnotationKey)
 	return UseAsFldOfReturnPrestring{
 		retAnn.FuncDecl.Name(),
 		retAnn.FieldDecl.Name(),
@@ -638,8 +638,8 @@ type SliceAssign struct {
 }
 
 // Prestring returns this SliceAssign as a Prestring
-func (f SliceAssign) Prestring() Prestring {
-	fldAnn := f.Ann.(TypeNameAnnotationKey)
+func (f *SliceAssign) Prestring() Prestring {
+	fldAnn := f.Ann.(*TypeNameAnnotationKey)
 	return SliceAssignPrestring{
 		fldAnn.TypeDecl.Name(),
 	}
@@ -660,8 +660,8 @@ type ArrayAssign struct {
 }
 
 // Prestring returns this ArrayAssign as a Prestring
-func (a ArrayAssign) Prestring() Prestring {
-	fldAnn := a.Ann.(TypeNameAnnotationKey)
+func (a *ArrayAssign) Prestring() Prestring {
+	fldAnn := a.Ann.(*TypeNameAnnotationKey)
 	return ArrayAssignPrestring{
 		fldAnn.TypeDecl.Name(),
 	}
@@ -682,8 +682,8 @@ type PtrAssign struct {
 }
 
 // Prestring returns this PtrAssign as a Prestring
-func (f PtrAssign) Prestring() Prestring {
-	fldAnn := f.Ann.(TypeNameAnnotationKey)
+func (f *PtrAssign) Prestring() Prestring {
+	fldAnn := f.Ann.(*TypeNameAnnotationKey)
 	return PtrAssignPrestring{
 		fldAnn.TypeDecl.Name(),
 	}
@@ -704,8 +704,8 @@ type MapAssign struct {
 }
 
 // Prestring returns this MapAssign as a Prestring
-func (f MapAssign) Prestring() Prestring {
-	fldAnn := f.Ann.(TypeNameAnnotationKey)
+func (f *MapAssign) Prestring() Prestring {
+	fldAnn := f.Ann.(*TypeNameAnnotationKey)
 	return MapAssignPrestring{
 		fldAnn.TypeDecl.Name(),
 	}
@@ -727,7 +727,7 @@ type DeepAssignPrimitive struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (DeepAssignPrimitive) Prestring() Prestring {
+func (*DeepAssignPrimitive) Prestring() Prestring {
 	return DeepAssignPrimitivePrestring{}
 }
 
@@ -744,8 +744,8 @@ type ParamAssignDeep struct {
 }
 
 // Prestring returns this ParamAssignDeep as a Prestring
-func (p ParamAssignDeep) Prestring() Prestring {
-	return ParamAssignDeepPrestring{p.Ann.(ParamAnnotationKey).MinimalString()}
+func (p *ParamAssignDeep) Prestring() Prestring {
+	return ParamAssignDeepPrestring{p.Ann.(*ParamAnnotationKey).MinimalString()}
 }
 
 // ParamAssignDeepPrestring is a Prestring storing the needed information to compactly encode a ParamAssignDeep
@@ -763,8 +763,8 @@ type FuncRetAssignDeep struct {
 }
 
 // Prestring returns this FuncRetAssignDeep as a Prestring
-func (f FuncRetAssignDeep) Prestring() Prestring {
-	retAnn := f.Ann.(RetAnnotationKey)
+func (f *FuncRetAssignDeep) Prestring() Prestring {
+	retAnn := f.Ann.(*RetAnnotationKey)
 	return FuncRetAssignDeepPrestring{
 		retAnn.FuncDecl.Name(),
 		retAnn.RetNum,
@@ -788,8 +788,8 @@ type VariadicParamAssignDeep struct {
 }
 
 // Prestring returns this VariadicParamAssignDeep as a Prestring
-func (v VariadicParamAssignDeep) Prestring() Prestring {
-	paramAnn := v.Ann.(ParamAnnotationKey)
+func (v *VariadicParamAssignDeep) Prestring() Prestring {
+	paramAnn := v.Ann.(*ParamAnnotationKey)
 	return VariadicParamAssignDeepPrestring{
 		ParamName: paramAnn.MinimalString(),
 	}
@@ -810,8 +810,8 @@ type FieldAssignDeep struct {
 }
 
 // Prestring returns this FieldAssignDeep as a Prestring
-func (f FieldAssignDeep) Prestring() Prestring {
-	fldAnn := f.Ann.(FieldAnnotationKey)
+func (f *FieldAssignDeep) Prestring() Prestring {
+	fldAnn := f.Ann.(*FieldAnnotationKey)
 	return FieldAssignDeepPrestring{fldAnn.FieldDecl.Name()}
 }
 
@@ -830,8 +830,8 @@ type GlobalVarAssignDeep struct {
 }
 
 // Prestring returns this GlobalVarAssignDeep as a Prestring
-func (g GlobalVarAssignDeep) Prestring() Prestring {
-	varAnn := g.Ann.(GlobalVarAnnotationKey)
+func (g *GlobalVarAssignDeep) Prestring() Prestring {
+	varAnn := g.Ann.(*GlobalVarAnnotationKey)
 	return GlobalVarAssignDeepPrestring{varAnn.VarDecl.Name()}
 }
 
@@ -850,7 +850,7 @@ type ChanAccess struct {
 }
 
 // Prestring returns this MapWrittenTo as a Prestring
-func (c ChanAccess) Prestring() Prestring {
+func (c *ChanAccess) Prestring() Prestring {
 	return ChanAccessPrestring{}
 }
 
@@ -868,7 +868,7 @@ type LocalVarAssignDeep struct {
 }
 
 // Prestring returns this LocalVarAssignDeep as a Prestring
-func (l LocalVarAssignDeep) Prestring() Prestring {
+func (l *LocalVarAssignDeep) Prestring() Prestring {
 	return LocalVarAssignDeepPrestring{VarName: l.LocalVar.Name()}
 }
 
@@ -887,8 +887,8 @@ type ChanSend struct {
 }
 
 // Prestring returns this ChanSend as a Prestring
-func (c ChanSend) Prestring() Prestring {
-	typeAnn := c.Ann.(TypeNameAnnotationKey)
+func (c *ChanSend) Prestring() Prestring {
+	typeAnn := c.Ann.(*TypeNameAnnotationKey)
 	return ChanSendPrestring{typeAnn.TypeDecl.Name()}
 }
 
@@ -914,8 +914,8 @@ type FldEscape struct {
 }
 
 // Prestring returns this FldEscape as a Prestring
-func (f FldEscape) Prestring() Prestring {
-	ann := f.Ann.(EscapeFieldAnnotationKey)
+func (f *FldEscape) Prestring() Prestring {
+	ann := f.Ann.(*EscapeFieldAnnotationKey)
 	return FldEscapePrestring{
 		FieldName: ann.FieldDecl.Name(),
 	}
@@ -939,8 +939,8 @@ type UseAsNonErrorRetDependentOnErrorRetNilability struct {
 }
 
 // Prestring returns this UseAsNonErrorRetDependentOnErrorRetNilability as a Prestring
-func (u UseAsNonErrorRetDependentOnErrorRetNilability) Prestring() Prestring {
-	retAnn := u.Ann.(RetAnnotationKey)
+func (u *UseAsNonErrorRetDependentOnErrorRetNilability) Prestring() Prestring {
+	retAnn := u.Ann.(*RetAnnotationKey)
 	return UseAsNonErrorRetDependentOnErrorRetNilabilityPrestring{
 		retAnn.FuncDecl.Name(),
 		retAnn.RetNum,
@@ -962,7 +962,7 @@ type UseAsNonErrorRetDependentOnErrorRetNilabilityPrestring struct {
 func (u UseAsNonErrorRetDependentOnErrorRetNilabilityPrestring) String() string {
 	via := ""
 	if u.IsNamedReturn {
-		via = fmt.Sprintf(" via the named return value `%s`", u.RetName)
+		via = fmt.Sprintf(" via named return `%s`", u.RetName)
 	}
 
 	return fmt.Sprintf("returned from `%s()`%s in position %d when the error return in position %d is not guaranteed to be non-nil through all paths",
@@ -986,8 +986,8 @@ type UseAsErrorRetWithNilabilityUnknown struct {
 }
 
 // Prestring returns this UseAsErrorRetWithNilabilityUnknown as a Prestring
-func (u UseAsErrorRetWithNilabilityUnknown) Prestring() Prestring {
-	retAnn := u.Ann.(RetAnnotationKey)
+func (u *UseAsErrorRetWithNilabilityUnknown) Prestring() Prestring {
+	retAnn := u.Ann.(*RetAnnotationKey)
 	return UseAsErrorRetWithNilabilityUnknownPrestring{
 		retAnn.FuncDecl.Name(),
 		retAnn.RetNum,
@@ -1006,9 +1006,9 @@ type UseAsErrorRetWithNilabilityUnknownPrestring struct {
 
 func (u UseAsErrorRetWithNilabilityUnknownPrestring) String() string {
 	if u.IsNamedReturn {
-		return fmt.Sprintf("found in at least one path of `%s()` for the named return `%s` in position %d", u.FuncName, u.RetName, u.RetNum)
+		return fmt.Sprintf("found in at least one path of `%s()` for named return `%s` in position %d", u.FuncName, u.RetName, u.RetNum)
 	}
-	return fmt.Sprintf("found in at least one path of `%s()` for the return in position %d", u.FuncName, u.RetNum)
+	return fmt.Sprintf("found in at least one path of `%s()` for return in position %d", u.FuncName, u.RetNum)
 }
 
 // overriding position value to point to the raw return statement, which is the source of the potential error

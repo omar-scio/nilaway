@@ -69,7 +69,7 @@ type TriggerIfNilable struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (TriggerIfNilable) Prestring() Prestring {
+func (*TriggerIfNilable) Prestring() Prestring {
 	return TriggerIfNilablePrestring{}
 }
 
@@ -111,7 +111,7 @@ type TriggerIfDeepNilable struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (TriggerIfDeepNilable) Prestring() Prestring {
+func (*TriggerIfDeepNilable) Prestring() Prestring {
 	return TriggerIfDeepNilablePrestring{}
 }
 
@@ -158,7 +158,7 @@ func (*ProduceTriggerTautology) NeedsGuardMatch() bool { return false }
 func (p *ProduceTriggerTautology) SetNeedsGuard(bool) ProducingAnnotationTrigger { return p }
 
 // Prestring returns this Prestring as a Prestring
-func (ProduceTriggerTautology) Prestring() Prestring {
+func (*ProduceTriggerTautology) Prestring() Prestring {
 	return ProduceTriggerTautologyPrestring{}
 }
 
@@ -179,7 +179,7 @@ func (*ProduceTriggerTautology) UnderlyingSite() Key { return nil }
 type ProduceTriggerNever struct{}
 
 // Prestring returns this Prestring as a Prestring
-func (ProduceTriggerNever) Prestring() Prestring {
+func (*ProduceTriggerNever) Prestring() Prestring {
 	return ProduceTriggerNeverPrestring{}
 }
 
@@ -229,7 +229,7 @@ type PositiveNilCheck struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (PositiveNilCheck) Prestring() Prestring {
+func (*PositiveNilCheck) Prestring() Prestring {
 	return PositiveNilCheckPrestring{}
 }
 
@@ -246,7 +246,7 @@ type NegativeNilCheck struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (NegativeNilCheck) Prestring() Prestring {
+func (*NegativeNilCheck) Prestring() Prestring {
 	return NegativeNilCheckPrestring{}
 }
 
@@ -275,7 +275,7 @@ type ConstNil struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (ConstNil) Prestring() Prestring {
+func (*ConstNil) Prestring() Prestring {
 	return ConstNilPrestring{}
 }
 
@@ -292,7 +292,7 @@ type UnassignedFld struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (UnassignedFld) Prestring() Prestring {
+func (*UnassignedFld) Prestring() Prestring {
 	return UnassignedFldPrestring{}
 }
 
@@ -310,7 +310,7 @@ type NoVarAssign struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (n NoVarAssign) Prestring() Prestring {
+func (n *NoVarAssign) Prestring() Prestring {
 	return NoVarAssignPrestring{
 		VarName: n.VarObj.Name(),
 	}
@@ -328,6 +328,11 @@ func (n NoVarAssignPrestring) String() string {
 // BlankVarReturn is when a value is determined to flow from a blank variable ('_') to a return of the function
 type BlankVarReturn struct {
 	*ProduceTriggerTautology
+}
+
+// Prestring returns this Prestring as a Prestring
+func (*BlankVarReturn) Prestring() Prestring {
+	return BlankVarReturnPrestring{}
 }
 
 // BlankVarReturnPrestring is a Prestring storing the needed information to compactly encode a BlankVarReturn
@@ -360,11 +365,11 @@ type FuncParam struct {
 }
 
 // Prestring returns this FuncParam as a Prestring
-func (f FuncParam) Prestring() Prestring {
+func (f *FuncParam) Prestring() Prestring {
 	switch key := f.Ann.(type) {
-	case ParamAnnotationKey:
+	case *ParamAnnotationKey:
 		return FuncParamPrestring{key.ParamNameString(), key.FuncDecl.Name(), ""}
-	case CallSiteParamAnnotationKey:
+	case *CallSiteParamAnnotationKey:
 		return FuncParamPrestring{key.ParamNameString(), key.FuncDecl.Name(), key.Location.String()}
 	default:
 		panic(fmt.Sprintf("Expected ParamAnnotationKey or CallSiteParamAnnotationKey but got: %T", key))
@@ -396,7 +401,7 @@ type MethodRecv struct {
 }
 
 // Prestring returns this MethodRecv as a Prestring
-func (m MethodRecv) Prestring() Prestring {
+func (m *MethodRecv) Prestring() Prestring {
 	return MethodRecvPrestring{m.VarDecl.Name()}
 }
 
@@ -416,7 +421,7 @@ type MethodRecvDeep struct {
 }
 
 // Prestring returns this MethodRecv as a Prestring
-func (m MethodRecvDeep) Prestring() Prestring {
+func (m *MethodRecvDeep) Prestring() Prestring {
 	return MethodRecvDeepPrestring{m.VarDecl.Name()}
 }
 
@@ -437,7 +442,7 @@ type VariadicFuncParam struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (v VariadicFuncParam) Prestring() Prestring {
+func (v *VariadicFuncParam) Prestring() Prestring {
 	return VariadicFuncParamPrestring{v.VarDecl.Name()}
 }
 
@@ -456,7 +461,7 @@ type TrustedFuncNilable struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (TrustedFuncNilable) Prestring() Prestring {
+func (*TrustedFuncNilable) Prestring() Prestring {
 	return TrustedFuncNilablePrestring{}
 }
 
@@ -473,7 +478,7 @@ type TrustedFuncNonnil struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (TrustedFuncNonnil) Prestring() Prestring {
+func (*TrustedFuncNonnil) Prestring() Prestring {
 	return TrustedFuncNonnilPrestring{}
 }
 
@@ -490,11 +495,11 @@ type FldRead struct {
 }
 
 // Prestring returns this FldRead as a Prestring
-func (f FldRead) Prestring() Prestring {
-	if ek, ok := f.Ann.(EscapeFieldAnnotationKey); ok {
+func (f *FldRead) Prestring() Prestring {
+	if ek, ok := f.Ann.(*EscapeFieldAnnotationKey); ok {
 		return FldReadPrestring{ek.FieldDecl.Name()}
 	}
-	return FldReadPrestring{f.Ann.(FieldAnnotationKey).FieldDecl.Name()}
+	return FldReadPrestring{f.Ann.(*FieldAnnotationKey).FieldDecl.Name()}
 }
 
 // FldReadPrestring is a Prestring storing the needed information to compactly encode a FldRead
@@ -513,8 +518,8 @@ type ParamFldRead struct {
 }
 
 // Prestring returns this ParamFldRead as a Prestring
-func (f ParamFldRead) Prestring() Prestring {
-	ann := f.Ann.(ParamFieldAnnotationKey)
+func (f *ParamFldRead) Prestring() Prestring {
+	ann := f.Ann.(*ParamFieldAnnotationKey)
 	return ParamFldReadPrestring{
 		FieldName: ann.FieldDecl.Name(),
 	}
@@ -539,8 +544,8 @@ func (f FldReturn) String() string {
 }
 
 // Prestring returns this FldReturn as a Prestring
-func (f FldReturn) Prestring() Prestring {
-	key := f.Ann.(RetFieldAnnotationKey)
+func (f *FldReturn) Prestring() Prestring {
+	key := f.Ann.(*RetFieldAnnotationKey)
 	return FldReturnPrestring{key.RetNum, key.FuncDecl.Name(), key.FieldDecl.Name()}
 }
 
@@ -567,11 +572,11 @@ type FuncReturn struct {
 }
 
 // Prestring returns this FuncReturn as a Prestring
-func (f FuncReturn) Prestring() Prestring {
+func (f *FuncReturn) Prestring() Prestring {
 	switch key := f.Ann.(type) {
-	case RetAnnotationKey:
+	case *RetAnnotationKey:
 		return FuncReturnPrestring{key.RetNum, key.FuncDecl.Name(), ""}
-	case CallSiteRetAnnotationKey:
+	case *CallSiteRetAnnotationKey:
 		return FuncReturnPrestring{key.RetNum, key.FuncDecl.Name(), key.Location.String()}
 	default:
 		panic(fmt.Sprintf("Expected RetAnnotationKey or CallSiteRetAnnotationKey but got: %T", key))
@@ -614,8 +619,8 @@ type MethodReturn struct {
 }
 
 // Prestring returns this MethodReturn as a Prestring
-func (m MethodReturn) Prestring() Prestring {
-	retKey := m.Ann.(RetAnnotationKey)
+func (m *MethodReturn) Prestring() Prestring {
+	retKey := m.Ann.(*RetAnnotationKey)
 	return MethodReturnPrestring{retKey.RetNum, retKey.FuncDecl.Name()}
 }
 
@@ -636,8 +641,8 @@ type MethodResultReachesInterface struct {
 }
 
 // Prestring returns this MethodResultReachesInterface as a Prestring
-func (m MethodResultReachesInterface) Prestring() Prestring {
-	retAnn := m.Ann.(RetAnnotationKey)
+func (m *MethodResultReachesInterface) Prestring() Prestring {
+	retAnn := m.Ann.(*RetAnnotationKey)
 	return MethodResultReachesInterfacePrestring{
 		retAnn.RetNum,
 		util.PartiallyQualifiedFuncName(retAnn.FuncDecl),
@@ -663,8 +668,8 @@ type InterfaceParamReachesImplementation struct {
 }
 
 // Prestring returns this InterfaceParamReachesImplementation as a Prestring
-func (i InterfaceParamReachesImplementation) Prestring() Prestring {
-	paramAnn := i.Ann.(ParamAnnotationKey)
+func (i *InterfaceParamReachesImplementation) Prestring() Prestring {
+	paramAnn := i.Ann.(*ParamAnnotationKey)
 	return InterfaceParamReachesImplementationPrestring{
 		paramAnn.ParamNameString(),
 		util.PartiallyQualifiedFuncName(paramAnn.FuncDecl),
@@ -689,8 +694,8 @@ type GlobalVarRead struct {
 }
 
 // Prestring returns this GlobalVarRead as a Prestring
-func (g GlobalVarRead) Prestring() Prestring {
-	key := g.Ann.(GlobalVarAnnotationKey)
+func (g *GlobalVarRead) Prestring() Prestring {
+	key := g.Ann.(*GlobalVarAnnotationKey)
 	return GlobalVarReadPrestring{
 		key.VarDecl.Name(),
 	}
@@ -713,8 +718,8 @@ type MapRead struct {
 }
 
 // Prestring returns this MapRead as a Prestring
-func (m MapRead) Prestring() Prestring {
-	key := m.Ann.(TypeNameAnnotationKey)
+func (m *MapRead) Prestring() Prestring {
+	key := m.Ann.(*TypeNameAnnotationKey)
 	return MapReadPrestring{key.TypeDecl.Name()}
 }
 
@@ -742,8 +747,8 @@ type ArrayRead struct {
 }
 
 // Prestring returns this ArrayRead as a Prestring
-func (a ArrayRead) Prestring() Prestring {
-	key := a.Ann.(TypeNameAnnotationKey)
+func (a *ArrayRead) Prestring() Prestring {
+	key := a.Ann.(*TypeNameAnnotationKey)
 	return ArrayReadPrestring{key.TypeDecl.Name()}
 }
 
@@ -762,8 +767,8 @@ type SliceRead struct {
 }
 
 // Prestring returns this SliceRead as a Prestring
-func (s SliceRead) Prestring() Prestring {
-	key := s.Ann.(TypeNameAnnotationKey)
+func (s *SliceRead) Prestring() Prestring {
+	key := s.Ann.(*TypeNameAnnotationKey)
 	return SliceReadPrestring{key.TypeDecl.Name()}
 }
 
@@ -782,8 +787,8 @@ type PtrRead struct {
 }
 
 // Prestring returns this PtrRead as a Prestring
-func (p PtrRead) Prestring() Prestring {
-	key := p.Ann.(TypeNameAnnotationKey)
+func (p *PtrRead) Prestring() Prestring {
+	key := p.Ann.(*TypeNameAnnotationKey)
 	return PtrReadPrestring{key.TypeDecl.Name()}
 }
 
@@ -803,8 +808,8 @@ type ChanRecv struct {
 }
 
 // Prestring returns this ChanRecv as a Prestring
-func (c ChanRecv) Prestring() Prestring {
-	key := c.Ann.(TypeNameAnnotationKey)
+func (c *ChanRecv) Prestring() Prestring {
+	key := c.Ann.(*TypeNameAnnotationKey)
 	return ChanRecvPrestring{key.TypeDecl.Name()}
 }
 
@@ -834,8 +839,8 @@ type FuncParamDeep struct {
 }
 
 // Prestring returns this FuncParamDeep as a Prestring
-func (f FuncParamDeep) Prestring() Prestring {
-	key := f.Ann.(ParamAnnotationKey)
+func (f *FuncParamDeep) Prestring() Prestring {
+	key := f.Ann.(*ParamAnnotationKey)
 	return FuncParamDeepPrestring{key.ParamNameString()}
 }
 
@@ -866,8 +871,8 @@ type VariadicFuncParamDeep struct {
 }
 
 // Prestring returns this VariadicFuncParamDeep as a Prestring
-func (v VariadicFuncParamDeep) Prestring() Prestring {
-	return VariadicFuncParamDeepPrestring{v.Ann.(ParamAnnotationKey).ParamNameString()}
+func (v *VariadicFuncParamDeep) Prestring() Prestring {
+	return VariadicFuncParamDeepPrestring{v.Ann.(*ParamAnnotationKey).ParamNameString()}
 }
 
 // VariadicFuncParamDeepPrestring is a Prestring storing the needed information to compactly encode a VariadicFuncParamDeep
@@ -897,8 +902,8 @@ type FuncReturnDeep struct {
 }
 
 // Prestring returns this FuncReturnDeep as a Prestring
-func (f FuncReturnDeep) Prestring() Prestring {
-	key := f.Ann.(RetAnnotationKey)
+func (f *FuncReturnDeep) Prestring() Prestring {
+	key := f.Ann.(*RetAnnotationKey)
 	return FuncReturnDeepPrestring{key.RetNum, key.FuncDecl.Name()}
 }
 
@@ -930,8 +935,8 @@ type FldReadDeep struct {
 }
 
 // Prestring returns this FldReadDeep as a Prestring
-func (f FldReadDeep) Prestring() Prestring {
-	key := f.Ann.(FieldAnnotationKey)
+func (f *FldReadDeep) Prestring() Prestring {
+	key := f.Ann.(*FieldAnnotationKey)
 	return FldReadDeepPrestring{key.FieldDecl.Name()}
 }
 
@@ -963,7 +968,7 @@ type LocalVarReadDeep struct {
 }
 
 // Prestring returns this LocalVarReadDeep as a Prestring
-func (v LocalVarReadDeep) Prestring() Prestring {
+func (v *LocalVarReadDeep) Prestring() Prestring {
 	return LocalVarReadDeepPrestring{v.ReadVar.Name()}
 }
 
@@ -994,8 +999,8 @@ type GlobalVarReadDeep struct {
 }
 
 // Prestring returns this GlobalVarReadDeep as a Prestring
-func (g GlobalVarReadDeep) Prestring() Prestring {
-	key := g.Ann.(GlobalVarAnnotationKey)
+func (g *GlobalVarReadDeep) Prestring() Prestring {
+	key := g.Ann.(*GlobalVarAnnotationKey)
 	return GlobalVarReadDeepPrestring{key.VarDecl.Name()}
 }
 
@@ -1034,7 +1039,7 @@ type GuardMissing struct {
 }
 
 // Prestring returns this GuardMissing as a Prestring
-func (g GuardMissing) Prestring() Prestring {
+func (g *GuardMissing) Prestring() Prestring {
 	return GuardMissingPrestring{g.OldAnnotation.Prestring()}
 }
 
