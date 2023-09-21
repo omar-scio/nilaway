@@ -510,7 +510,7 @@ func FilterTriggersForErrorReturn(
 			// update the placeholder non-error returns consumer `UseAsNonErrorRetDependentOnErrorRetNilability` with `UseAsReturn`
 			for _, i := range v.nonErrTriggers {
 				if old, ok := triggers[i].Consumer.Annotation.(*annotation.UseAsNonErrorRetDependentOnErrorRetNilability); ok {
-					if oldAnn, ok := old.Ann.(annotation.RetAnnotationKey); ok {
+					if oldAnn, ok := old.Ann.(*annotation.RetAnnotationKey); ok {
 						triggers[i].Consumer = &annotation.ConsumeTrigger{
 							Annotation: &annotation.UseAsReturn{
 								TriggerIfNonNil: &annotation.TriggerIfNonNil{Ann: oldAnn},
@@ -533,7 +533,7 @@ func FilterTriggersForErrorReturn(
 			// update the placeholder error return consumer `UseAsErrorRetWithNilabilityUnknown` with `UseAsErrorResult`
 			for _, i := range v.errTriggers {
 				if old, ok := triggers[i].Consumer.Annotation.(*annotation.UseAsErrorRetWithNilabilityUnknown); ok {
-					if oldAnn, ok := old.Ann.(annotation.RetAnnotationKey); ok {
+					if oldAnn, ok := old.Ann.(*annotation.RetAnnotationKey); ok {
 						triggers[i].Consumer = &annotation.ConsumeTrigger{
 							Annotation: &annotation.UseAsErrorResult{
 								TriggerIfNonNil: &annotation.TriggerIfNonNil{Ann: oldAnn},
