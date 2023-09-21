@@ -19,6 +19,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"reflect"
 	"strings"
 
 	"go.uber.org/nilaway/util"
@@ -648,7 +649,7 @@ func (u *UseAsNonErrorRetDependentOnErrorRetNilability) Prestring() Prestring {
 
 	via := ""
 	if u.IsNamedReturn {
-		via = fmt.Sprintf(" via the named return value `%s`", retAnn.FuncDecl.Type().(*types.Signature).Results().At(retAnn.RetNum).Name())
+		via = fmt.Sprintf(" via named return `%s`", retAnn.FuncDecl.Type().(*types.Signature).Results().At(retAnn.RetNum).Name())
 	}
 	message := fmt.Sprintf("returned from `%s()`%s in position %d when the error return in position %d is not guaranteed to be non-nil through all paths",
 		retAnn.FuncDecl.Name(), via, retAnn.RetNum, retAnn.FuncDecl.Type().(*types.Signature).Results().Len()-1)
@@ -750,7 +751,7 @@ type ConsumeTrigger struct {
 
 // Eq compares two ConsumeTrigger pointers for equality
 func (c *ConsumeTrigger) Eq(c2 *ConsumeTrigger) bool {
-	return c.Annotation == c2.Annotation &&
+	return reflect.DeepEqual(c.Annotation, c2.Annotation) &&
 		c.Expr == c2.Expr &&
 		c.Guards.Eq(c2.Guards) &&
 		c.GuardMatched == c2.GuardMatched
@@ -774,7 +775,7 @@ func MergeConsumeTriggerSlices(left, right []*ConsumeTrigger) []*ConsumeTrigger 
 
 	addToOut := func(trigger *ConsumeTrigger) {
 		for i, outTrigger := range out {
-			if outTrigger.Annotation == trigger.Annotation &&
+			if reflect.DeepEqual(outTrigger.Annotation, trigger.Annotation) &&
 				outTrigger.Expr == trigger.Expr {
 				// intersect guard sets - if a guard isn't present in both branches it can't
 				// be considered present before the branch

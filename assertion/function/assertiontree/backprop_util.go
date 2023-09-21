@@ -499,7 +499,7 @@ func exprAsAssignmentConsumer(rootNode *RootAssertionNode, expr ast.Node, exprRH
 			}
 
 			nameAsDeepTrigger := func(name *types.TypeName) *annotation.TriggerIfDeepNonNil {
-				return &annotation.TriggerIfDeepNonNil{Ann: annotation.TypeNameAnnotationKey{TypeDecl: name}}
+				return &annotation.TriggerIfDeepNonNil{Ann: &annotation.TypeNameAnnotationKey{TypeDecl: name}}
 			}
 
 			exprType := rootNode.Pass().TypesInfo.Types[expr].Type

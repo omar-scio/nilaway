@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"reflect"
 
 	"go.uber.org/nilaway/util"
 	"golang.org/x/tools/go/analysis"
@@ -149,21 +150,23 @@ func FullTriggerSlicesEq(left, right []FullTrigger) bool {
 		return false
 	}
 
-	// because we have two sets of the same size, without repetition, to test equality it suffices
-	// to check that one of them contains the other
-	visited := make(map[fullTriggerKey]bool)
-	for _, t := range left {
-		key := t.key()
-		visited[key] = true
-	}
+	// // because we have two sets of the same size, without repetition, to test equality it suffices
+	// // to check that one of them contains the other
+	// visited := make(map[fullTriggerKey]bool)
+	// for _, t := range left {
+	// 	key := t.key()
+	// 	visited[key] = true
+	// }
+	//
+	// for _, t := range right {
+	// 	key := t.key()
+	// 	if _, ok := visited[key]; !ok {
+	// 		return false
+	// 	}
+	// }
+	// return true
 
-	for _, t := range right {
-		key := t.key()
-		if _, ok := visited[key]; !ok {
-			return false
-		}
-	}
-	return true
+	return reflect.DeepEqual(left, right)
 }
 
 // fullTriggerKeyModGuarding is a subset of fullTriggerKey and serves as a key for implementing a visited map in MergeFullTriggers(). The three fields are chosen based
@@ -188,23 +191,55 @@ func (t *FullTrigger) keyModGuarding() fullTriggerKeyModGuarding {
 
 // MergeFullTriggers creates a union of the passed left and right triggers eliminating duplicates
 func MergeFullTriggers(left []FullTrigger, right ...FullTrigger) []FullTrigger {
-	totalLen := len(left) + len(right)
-	out := make([]FullTrigger, 0, totalLen)
-	visited := make(map[fullTriggerKeyModGuarding]int, totalLen) // stores the visited triggers keyed by fullTriggerKeyModGuarding, and value is the index of the trigger in `out`
+	// totalLen := len(left) + len(right)
+	// out := make([]FullTrigger, 0, totalLen)
+	// visited := make(map[fullTriggerKeyModGuarding]int, totalLen) // stores the visited triggers keyed by fullTriggerKeyModGuarding, and value is the index of the trigger in `out`
+	//
+	// for _, triggers := range [...][]FullTrigger{left, right} {
+	// 	for _, t := range triggers {
+	// 		key := t.keyModGuarding()
+	// 		if v, ok := visited[key]; ok {
+	// 			if out[v].Consumer.GuardMatched && !t.Consumer.GuardMatched {
+	// 				// Right now, there is no use for guards in FullTriggers. If this changes, then make sure the merged trigger gets the intersection of the prior guard sets
+	// 				out[v].Consumer.Guards = util.NoGuards()
+	// 				out[v].Consumer.GuardMatched = false
+	// 			}
+	// 		} else {
+	// 			out = append(out, t)
+	// 			visited[key] = len(out) - 1
+	// 		}
+	// 	}
+	// }
 
-	for _, triggers := range [...][]FullTrigger{left, right} {
-		for _, t := range triggers {
-			key := t.keyModGuarding()
-			if v, ok := visited[key]; ok {
-				if out[v].Consumer.GuardMatched && !t.Consumer.GuardMatched {
-					// Right now, there is no use for guards in FullTriggers. If this changes, then make sure the merged trigger gets the intersection of the prior guard sets
-					out[v].Consumer.Guards = util.NoGuards()
-					out[v].Consumer.GuardMatched = false
+	var out []FullTrigger
+	toUpdateLeftGuard := make(map[int]bool)
+	skipRight := make(map[int]bool)
+
+	for i, l := range left {
+		for j, r := range right {
+			if reflect.DeepEqual(l.Producer.Annotation, r.Producer.Annotation) &&
+				reflect.DeepEqual(l.Consumer.Annotation, r.Consumer.Annotation) &&
+				l.Consumer.Expr == r.Consumer.Expr {
+				if l.Consumer.GuardMatched != r.Consumer.GuardMatched {
+					toUpdateLeftGuard[i] = true
+				} else {
+					skipRight[j] = true
 				}
-			} else {
-				out = append(out, t)
-				visited[key] = len(out) - 1
 			}
+		}
+	}
+
+	for i, l := range left {
+		if toUpdateLeftGuard[i] {
+			l.Consumer.Guards = util.NoGuards()
+			l.Consumer.GuardMatched = false
+		}
+		out = append(out, l)
+	}
+
+	for j, r := range right {
+		if !skipRight[j] {
+			out = append(out, r)
 		}
 	}
 
