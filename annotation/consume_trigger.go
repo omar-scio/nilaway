@@ -66,15 +66,6 @@ type Prestring interface {
 	String() string
 }
 
-// ErrorMessage stores the error message to be displayed when the trigger is fired
-type ErrorMessage struct {
-	Text string
-}
-
-func (e ErrorMessage) String() string {
-	return e.Text
-}
-
 // TriggerIfNonNil is triggered if the contained Annotation is non-nil
 type TriggerIfNonNil struct {
 	Ann Key
@@ -129,9 +120,15 @@ type PtrLoad struct {
 }
 
 // Prestring returns this PtrLoad as a Prestring
-func (p *PtrLoad) Prestring() Prestring {
-	message := "dereferenced"
-	return ErrorMessage{Text: message}
+func (p PtrLoad) Prestring() Prestring {
+	return PtrLoadPrestring{}
+}
+
+// PtrLoadPrestring is a Prestring storing the needed information to compactly encode a PtrLoad
+type PtrLoadPrestring struct{}
+
+func (PtrLoadPrestring) String() string {
+	return "dereferenced"
 }
 
 // MapAccess is when a map value flows to a point where it is indexed, and thus must be non-nil
@@ -142,9 +139,15 @@ type MapAccess struct {
 }
 
 // Prestring returns this MapAccess as a Prestring
-func (i *MapAccess) Prestring() Prestring {
-	message := "keyed into"
-	return ErrorMessage{Text: message}
+func (i MapAccess) Prestring() Prestring {
+	return MapAccessPrestring{}
+}
+
+// MapAccessPrestring is a Prestring storing the needed information to compactly encode a MapAccess
+type MapAccessPrestring struct{}
+
+func (MapAccessPrestring) String() string {
+	return "keyed into"
 }
 
 // MapWrittenTo is when a map value flows to a point where one of its indices is written to, and thus
@@ -154,9 +157,15 @@ type MapWrittenTo struct {
 }
 
 // Prestring returns this MapWrittenTo as a Prestring
-func (m *MapWrittenTo) Prestring() Prestring {
-	message := "written to at an index"
-	return ErrorMessage{Text: message}
+func (m MapWrittenTo) Prestring() Prestring {
+	return MapWrittenToPrestring{}
+}
+
+// MapWrittenToPrestring is a Prestring storing the needed information to compactly encode a MapWrittenTo
+type MapWrittenToPrestring struct{}
+
+func (MapWrittenToPrestring) String() string {
+	return "written to at an index"
 }
 
 // SliceAccess is when a slice value flows to a point where it is sliced, and thus must be non-nil
@@ -165,9 +174,15 @@ type SliceAccess struct {
 }
 
 // Prestring returns this SliceAccess as a Prestring
-func (s *SliceAccess) Prestring() Prestring {
-	message := "sliced into"
-	return ErrorMessage{Text: message}
+func (s SliceAccess) Prestring() Prestring {
+	return SliceAccessPrestring{}
+}
+
+// SliceAccessPrestring is a Prestring storing the needed information to compactly encode a SliceAccess
+type SliceAccessPrestring struct{}
+
+func (SliceAccessPrestring) String() string {
+	return "sliced into"
 }
 
 // FldAccess is when a value flows to a point where a field of it is accessed, and so it must be non-nil
@@ -178,19 +193,34 @@ type FldAccess struct {
 }
 
 // Prestring returns this FldAccess as a Prestring
-func (f *FldAccess) Prestring() Prestring {
-	message := ""
-
+func (f FldAccess) Prestring() Prestring {
+	fieldName, methodName := "", ""
 	switch t := f.Sel.(type) {
 	case *types.Var:
-		message = fmt.Sprintf("accessed field `%s`", t.Name())
+		fieldName = t.Name()
 	case *types.Func:
-		message = fmt.Sprintf("called `%s()`", t.Name())
+		methodName = t.Name()
 	default:
 		panic(fmt.Sprintf("unexpected Sel type %T in FldAccess", t))
 	}
 
-	return ErrorMessage{Text: message}
+	return FldAccessPrestring{
+		FieldName:  fieldName,
+		MethodName: methodName,
+	}
+}
+
+// FldAccessPrestring is a Prestring storing the needed information to compactly encode a FldAccess
+type FldAccessPrestring struct {
+	FieldName  string
+	MethodName string
+}
+
+func (f FldAccessPrestring) String() string {
+	if f.MethodName != "" {
+		return fmt.Sprintf("called `%s()`", f.MethodName)
+	}
+	return fmt.Sprintf("accessed field `%s`", f.FieldName)
 }
 
 // UseAsErrorResult is when a value flows to the error result of a function, where it is expected to be non-nil
@@ -202,17 +232,29 @@ type UseAsErrorResult struct {
 }
 
 // Prestring returns this UseAsErrorResult as a Prestring
-func (u *UseAsErrorResult) Prestring() Prestring {
-	retAnn := u.Ann.(*RetAnnotationKey)
-	message := ""
-	if u.IsNamedReturn {
-		message = fmt.Sprintf("returned as named error result `%s` of `%s()`",
-			retAnn.FuncDecl.Type().(*types.Signature).Results().At(retAnn.RetNum).Name(), retAnn.FuncDecl.Name())
-	} else {
-		message = fmt.Sprintf("returned as error result %d of `%s()`", retAnn.RetNum, retAnn.FuncDecl.Name())
+func (u UseAsErrorResult) Prestring() Prestring {
+	retAnn := u.Ann.(RetAnnotationKey)
+	return UseAsErrorResultPrestring{
+		Pos:              retAnn.RetNum,
+		ReturningFuncStr: retAnn.FuncDecl.Name(),
+		IsNamedReturn:    u.IsNamedReturn,
+		RetName:          retAnn.FuncDecl.Type().(*types.Signature).Results().At(retAnn.RetNum).Name(),
 	}
+}
 
-	return ErrorMessage{Text: message}
+// UseAsErrorResultPrestring is a Prestring storing the needed information to compactly encode a UseAsErrorResult
+type UseAsErrorResultPrestring struct {
+	Pos              int
+	ReturningFuncStr string
+	IsNamedReturn    bool
+	RetName          string
+}
+
+func (u UseAsErrorResultPrestring) String() string {
+	if u.IsNamedReturn {
+		return fmt.Sprintf("returned as named error result `%s` of `%s()`", u.RetName, u.ReturningFuncStr)
+	}
+	return fmt.Sprintf("returned as error result %d of `%s()`", u.Pos, u.ReturningFuncStr)
 }
 
 // overriding position value to point to the raw return statement, which is the source of the potential error
@@ -229,10 +271,20 @@ type FldAssign struct {
 }
 
 // Prestring returns this FldAssign as a Prestring
-func (f *FldAssign) Prestring() Prestring {
-	fldAnn := f.Ann.(*FieldAnnotationKey)
-	message := fmt.Sprintf("assigned into field `%s`", fldAnn.FieldDecl.Name())
-	return ErrorMessage{Text: message}
+func (f FldAssign) Prestring() Prestring {
+	fldAnn := f.Ann.(FieldAnnotationKey)
+	return FldAssignPrestring{
+		FieldName: fldAnn.FieldDecl.Name(),
+	}
+}
+
+// FldAssignPrestring is a Prestring storing the needed information to compactly encode a FldAssign
+type FldAssignPrestring struct {
+	FieldName string
+}
+
+func (f FldAssignPrestring) String() string {
+	return fmt.Sprintf("assigned into field `%s`", f.FieldName)
 }
 
 // ArgFldPass is when a struct field value (A.f) flows to a point where it is passed to a function with a param of
@@ -250,19 +302,34 @@ func (f *ArgFldPass) Prestring() Prestring {
 		recvName = ann.FuncDecl.Type().(*types.Signature).Recv().Name()
 	}
 
-	message := ""
+	return ArgFldPassPrestring{
+		FieldName: ann.FieldDecl.Name(),
+		FuncName:  ann.FuncDecl.Name(),
+		ParamNum:  ann.ParamNum,
+		RecvName:  recvName,
+		IsPassed:  f.IsPassed,
+	}
+}
+
+// ArgFldPassPrestring is a Prestring storing the needed information to compactly encode a ArgFldPass
+type ArgFldPassPrestring struct {
+	FieldName string
+	FuncName  string
+	ParamNum  int
+	RecvName  string
+	IsPassed  bool
+}
+
+func (f ArgFldPassPrestring) String() string {
 	prefix := ""
 	if f.IsPassed {
 		prefix = "assigned to "
 	}
 
-	if len(recvName) > 0 {
-		message = fmt.Sprintf("%sfield `%s` of method receiver `%s`", prefix, ann.FieldDecl.Name(), recvName)
-	} else {
-		message = fmt.Sprintf("%sfield `%s` of argument %d to `%s()`", prefix, ann.FieldDecl.Name(), ann.ParamNum, ann.FuncDecl.Name())
+	if len(f.RecvName) > 0 {
+		return fmt.Sprintf("%sfield `%s` of method receiver `%s`", prefix, f.FieldName, f.RecvName)
 	}
-
-	return ErrorMessage{Text: message}
+	return fmt.Sprintf("%sfield `%s` of argument %d to `%s()`", prefix, f.FieldName, f.ParamNum, f.FuncName)
 }
 
 // GlobalVarAssign is when a value flows to a point where it is assigned into a global variable
@@ -271,10 +338,20 @@ type GlobalVarAssign struct {
 }
 
 // Prestring returns this GlobalVarAssign as a Prestring
-func (g *GlobalVarAssign) Prestring() Prestring {
-	varAnn := g.Ann.(*GlobalVarAnnotationKey)
-	message := fmt.Sprintf("assigned into global variable `%s`", varAnn.VarDecl.Name())
-	return ErrorMessage{Text: message}
+func (g GlobalVarAssign) Prestring() Prestring {
+	varAnn := g.Ann.(GlobalVarAnnotationKey)
+	return GlobalVarAssignPrestring{
+		VarName: varAnn.VarDecl.Name(),
+	}
+}
+
+// GlobalVarAssignPrestring is a Prestring storing the needed information to compactly encode a GlobalVarAssign
+type GlobalVarAssignPrestring struct {
+	VarName string
+}
+
+func (g GlobalVarAssignPrestring) String() string {
+	return fmt.Sprintf("assigned into global variable `%s`", g.VarName)
 }
 
 // ArgPass is when a value flows to a point where it is passed as an argument to a function. This
@@ -288,20 +365,42 @@ type ArgPass struct {
 }
 
 // Prestring returns this ArgPass as a Prestring
-func (a *ArgPass) Prestring() Prestring {
-	message := ""
+func (a ArgPass) Prestring() Prestring {
 	switch key := a.Ann.(type) {
-	case *ParamAnnotationKey:
-		message = fmt.Sprintf("passed as %s to `%s()`", key.MinimalString(), key.FuncDecl.Name())
-	case *CallSiteParamAnnotationKey:
-		// Location points to the code location of the argument pass at the call site for a ArgPass
-		// enclosing CallSiteParamAnnotationKey; Location is empty for a ArgPass enclosing ParamAnnotationKey.
-		message = fmt.Sprintf("passed as %s to `%s()` at %s", key.MinimalString(), key.FuncDecl.Name(), key.Location.String())
+	case ParamAnnotationKey:
+		return ArgPassPrestring{
+			ParamName: key.MinimalString(),
+			FuncName:  key.FuncDecl.Name(),
+			Location:  "",
+		}
+	case CallSiteParamAnnotationKey:
+		return ArgPassPrestring{
+			ParamName: key.MinimalString(),
+			FuncName:  key.FuncDecl.Name(),
+			Location:  key.Location.String(),
+		}
 	default:
 		panic(fmt.Sprintf(
 			"Expected ParamAnnotationKey or CallSiteParamAnnotationKey but got: %T", key))
 	}
-	return ErrorMessage{Text: message}
+}
+
+// ArgPassPrestring is a Prestring storing the needed information to compactly encode a ArgPass
+type ArgPassPrestring struct {
+	ParamName string
+	FuncName  string
+	// Location points to the code location of the argument pass at the call site for a ArgPass
+	// enclosing CallSiteParamAnnotationKey; Location is empty for a ArgPass enclosing ParamAnnotationKey.
+	Location string
+}
+
+func (a ArgPassPrestring) String() string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("passed as %s to `%s()`", a.ParamName, a.FuncName))
+	if a.Location != "" {
+		sb.WriteString(fmt.Sprintf(" at %s", a.Location))
+	}
+	return sb.String()
 }
 
 // RecvPass is when a receiver value flows to a point where it is used to invoke a method.
@@ -311,10 +410,20 @@ type RecvPass struct {
 }
 
 // Prestring returns this RecvPass as a Prestring
-func (a *RecvPass) Prestring() Prestring {
-	recvAnn := a.Ann.(*RecvAnnotationKey)
-	message := fmt.Sprintf("used as receiver to call `%s()`", recvAnn.FuncDecl.Name())
-	return ErrorMessage{Text: message}
+func (a RecvPass) Prestring() Prestring {
+	recvAnn := a.Ann.(RecvAnnotationKey)
+	return RecvPassPrestring{
+		FuncName: recvAnn.FuncDecl.Name(),
+	}
+}
+
+// RecvPassPrestring is a Prestring storing the needed information to compactly encode a RecvPass
+type RecvPassPrestring struct {
+	FuncName string
+}
+
+func (a RecvPassPrestring) String() string {
+	return fmt.Sprintf("used as receiver to call `%s()`", a.FuncName)
 }
 
 // InterfaceResultFromImplementation is when a result is determined to flow from a concrete method to an interface method via implementation
@@ -324,11 +433,25 @@ type InterfaceResultFromImplementation struct {
 }
 
 // Prestring returns this InterfaceResultFromImplementation as a Prestring
-func (i *InterfaceResultFromImplementation) Prestring() Prestring {
-	retAnn := i.Ann.(*RetAnnotationKey)
-	message := fmt.Sprintf("returned as result %d from interface method `%s()` (implemented by `%s()`)",
-		retAnn.RetNum, util.PartiallyQualifiedFuncName(retAnn.FuncDecl), util.PartiallyQualifiedFuncName(i.ImplementingMethod))
-	return ErrorMessage{Text: message}
+func (i InterfaceResultFromImplementation) Prestring() Prestring {
+	retAnn := i.Ann.(RetAnnotationKey)
+	return InterfaceResultFromImplementationPrestring{
+		retAnn.RetNum,
+		util.PartiallyQualifiedFuncName(retAnn.FuncDecl),
+		util.PartiallyQualifiedFuncName(i.ImplementingMethod),
+	}
+}
+
+// InterfaceResultFromImplementationPrestring is a Prestring storing the needed information to compactly encode a InterfaceResultFromImplementation
+type InterfaceResultFromImplementationPrestring struct {
+	RetNum   int
+	IntName  string
+	ImplName string
+}
+
+func (i InterfaceResultFromImplementationPrestring) String() string {
+	return fmt.Sprintf("returned as result %d from interface method `%s()` (implemented by `%s()`)",
+		i.RetNum, i.IntName, i.ImplName)
 }
 
 // MethodParamFromInterface is when a param flows from an interface method to a concrete method via implementation
@@ -338,11 +461,25 @@ type MethodParamFromInterface struct {
 }
 
 // Prestring returns this MethodParamFromInterface as a Prestring
-func (m *MethodParamFromInterface) Prestring() Prestring {
-	paramAnn := m.Ann.(*ParamAnnotationKey)
-	message := fmt.Sprintf("passed as parameter `%s` to `%s()` (implementing `%s()`)",
-		paramAnn.ParamNameString(), util.PartiallyQualifiedFuncName(paramAnn.FuncDecl), util.PartiallyQualifiedFuncName(m.InterfaceMethod))
-	return ErrorMessage{Text: message}
+func (m MethodParamFromInterface) Prestring() Prestring {
+	paramAnn := m.Ann.(ParamAnnotationKey)
+	return MethodParamFromInterfacePrestring{
+		paramAnn.ParamNameString(),
+		util.PartiallyQualifiedFuncName(paramAnn.FuncDecl),
+		util.PartiallyQualifiedFuncName(m.InterfaceMethod),
+	}
+}
+
+// MethodParamFromInterfacePrestring is a Prestring storing the needed information to compactly encode a MethodParamFromInterface
+type MethodParamFromInterfacePrestring struct {
+	ParamName string
+	ImplName  string
+	IntName   string
+}
+
+func (m MethodParamFromInterfacePrestring) String() string {
+	return fmt.Sprintf("passed as parameter `%s` to `%s()` (implementing `%s()`)",
+		m.ParamName, m.ImplName, m.IntName)
 }
 
 // DuplicateReturnConsumer duplicates a given consume trigger, assuming the given consumer trigger
@@ -375,33 +512,53 @@ type UseAsReturn struct {
 }
 
 // Prestring returns this UseAsReturn as a Prestring
-func (u *UseAsReturn) Prestring() Prestring {
-	message := ""
+func (u UseAsReturn) Prestring() Prestring {
 	switch key := u.Ann.(type) {
-	case *RetAnnotationKey:
-		var sb strings.Builder
-		sb.WriteString(fmt.Sprintf("returned from `%s()`", key.FuncDecl.Name()))
-		if u.IsNamedReturn {
-			sb.WriteString(fmt.Sprintf(" via named return `%s`", key.FuncDecl.Type().(*types.Signature).Results().At(key.RetNum).Name()))
-		} else {
-			sb.WriteString(fmt.Sprintf(" in position %d", key.RetNum))
+	case RetAnnotationKey:
+		return UseAsReturnPrestring{
+			key.FuncDecl.Name(),
+			key.RetNum,
+			u.IsNamedReturn,
+			key.FuncDecl.Type().(*types.Signature).Results().At(key.RetNum).Name(),
+			"",
 		}
-		message = sb.String()
-	case *CallSiteRetAnnotationKey:
-		var sb strings.Builder
-		sb.WriteString(fmt.Sprintf("returned from `%s()`", key.FuncDecl.Name()))
-		if u.IsNamedReturn {
-			sb.WriteString(fmt.Sprintf(" via named return `%s`", key.FuncDecl.Type().(*types.Signature).Results().At(key.RetNum).Name()))
-		} else {
-			sb.WriteString(fmt.Sprintf(" in position %d", key.RetNum))
+	case CallSiteRetAnnotationKey:
+		return UseAsReturnPrestring{
+			key.FuncDecl.Name(),
+			key.RetNum,
+			u.IsNamedReturn,
+			key.FuncDecl.Type().(*types.Signature).Results().At(key.RetNum).Name(),
+			key.Location.String(),
 		}
-		sb.WriteString(fmt.Sprintf(" at %s", key.Location.String()))
-		message = sb.String()
 	default:
 		panic(fmt.Sprintf("Expected RetAnnotationKey or CallSiteRetAnnotationKey but got: %T", key))
 	}
+}
 
-	return ErrorMessage{Text: message}
+// UseAsReturnPrestring is a Prestring storing the needed information to compactly encode a UseAsReturn
+type UseAsReturnPrestring struct {
+	FuncName      string
+	RetNum        int
+	IsNamedReturn bool
+	RetName       string
+	// Location is empty for a UseAsReturn enclosing RetAnnotationKey. Location points to the
+	// location of the result at the call site for a UseAsReturn enclosing
+	// CallSiteRetAnnotationKey.
+	Location string
+}
+
+func (u UseAsReturnPrestring) String() string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("returned from `%s()`", u.FuncName))
+	if u.IsNamedReturn {
+		sb.WriteString(fmt.Sprintf(" via named return `%s`", u.RetName))
+	} else {
+		sb.WriteString(fmt.Sprintf(" in position %d", u.RetNum))
+	}
+	if u.Location != "" {
+		sb.WriteString(fmt.Sprintf(" at %s", u.Location))
+	}
+	return sb.String()
 }
 
 // overriding position value to point to the raw return statement, which is the source of the potential error
@@ -419,10 +576,24 @@ type UseAsFldOfReturn struct {
 }
 
 // Prestring returns this UseAsFldOfReturn as a Prestring
-func (u *UseAsFldOfReturn) Prestring() Prestring {
-	retAnn := u.Ann.(*RetFieldAnnotationKey)
-	message := fmt.Sprintf("field `%s` returned by result %d of `%s()`", retAnn.FieldDecl.Name(), retAnn.RetNum, retAnn.FuncDecl.Name())
-	return ErrorMessage{Text: message}
+func (u UseAsFldOfReturn) Prestring() Prestring {
+	retAnn := u.Ann.(RetFieldAnnotationKey)
+	return UseAsFldOfReturnPrestring{
+		retAnn.FuncDecl.Name(),
+		retAnn.FieldDecl.Name(),
+		retAnn.RetNum,
+	}
+}
+
+// UseAsFldOfReturnPrestring is a Prestring storing the needed information to compactly encode a UseAsFldOfReturn
+type UseAsFldOfReturnPrestring struct {
+	FuncName  string
+	FieldName string
+	RetNum    int
+}
+
+func (u UseAsFldOfReturnPrestring) String() string {
+	return fmt.Sprintf("field `%s` returned by result %d of `%s()`", u.FieldName, u.RetNum, u.FuncName)
 }
 
 // GetRetFldConsumer returns the UseAsFldOfReturn consume trigger with given retKey and expr
@@ -467,10 +638,20 @@ type SliceAssign struct {
 }
 
 // Prestring returns this SliceAssign as a Prestring
-func (f *SliceAssign) Prestring() Prestring {
-	fldAnn := f.Ann.(*TypeNameAnnotationKey)
-	message := fmt.Sprintf("assigned into a slice of deeply nonnil type `%s`", fldAnn.TypeDecl.Name())
-	return ErrorMessage{Text: message}
+func (f SliceAssign) Prestring() Prestring {
+	fldAnn := f.Ann.(TypeNameAnnotationKey)
+	return SliceAssignPrestring{
+		fldAnn.TypeDecl.Name(),
+	}
+}
+
+// SliceAssignPrestring is a Prestring storing the needed information to compactly encode a SliceAssign
+type SliceAssignPrestring struct {
+	TypeName string
+}
+
+func (f SliceAssignPrestring) String() string {
+	return fmt.Sprintf("assigned into a slice of deeply nonnil type `%s`", f.TypeName)
 }
 
 // ArrayAssign is when a value flows to a point where it is assigned into an array
@@ -479,10 +660,20 @@ type ArrayAssign struct {
 }
 
 // Prestring returns this ArrayAssign as a Prestring
-func (a *ArrayAssign) Prestring() Prestring {
-	fldAnn := a.Ann.(*TypeNameAnnotationKey)
-	message := fmt.Sprintf("assigned into an array of deeply nonnil type `%s`", fldAnn.TypeDecl.Name())
-	return ErrorMessage{Text: message}
+func (a ArrayAssign) Prestring() Prestring {
+	fldAnn := a.Ann.(TypeNameAnnotationKey)
+	return ArrayAssignPrestring{
+		fldAnn.TypeDecl.Name(),
+	}
+}
+
+// ArrayAssignPrestring is a Prestring storing the needed information to compactly encode a SliceAssign
+type ArrayAssignPrestring struct {
+	TypeName string
+}
+
+func (a ArrayAssignPrestring) String() string {
+	return fmt.Sprintf("assigned into an array of deeply nonnil type `%s`", a.TypeName)
 }
 
 // PtrAssign is when a value flows to a point where it is assigned into a pointer
@@ -491,10 +682,20 @@ type PtrAssign struct {
 }
 
 // Prestring returns this PtrAssign as a Prestring
-func (f *PtrAssign) Prestring() Prestring {
-	fldAnn := f.Ann.(*TypeNameAnnotationKey)
-	message := fmt.Sprintf("assigned into a pointer of deeply nonnil type `%s`", fldAnn.TypeDecl.Name())
-	return ErrorMessage{Text: message}
+func (f PtrAssign) Prestring() Prestring {
+	fldAnn := f.Ann.(TypeNameAnnotationKey)
+	return PtrAssignPrestring{
+		fldAnn.TypeDecl.Name(),
+	}
+}
+
+// PtrAssignPrestring is a Prestring storing the needed information to compactly encode a PtrAssign
+type PtrAssignPrestring struct {
+	TypeName string
+}
+
+func (f PtrAssignPrestring) String() string {
+	return fmt.Sprintf("assigned into a pointer of deeply nonnil type `%s`", f.TypeName)
 }
 
 // MapAssign is when a value flows to a point where it is assigned into an annotated map
@@ -503,10 +704,20 @@ type MapAssign struct {
 }
 
 // Prestring returns this MapAssign as a Prestring
-func (f *MapAssign) Prestring() Prestring {
-	fldAnn := f.Ann.(*TypeNameAnnotationKey)
-	message := fmt.Sprintf("assigned into a map of deeply nonnil type `%s`", fldAnn.TypeDecl.Name())
-	return ErrorMessage{Text: message}
+func (f MapAssign) Prestring() Prestring {
+	fldAnn := f.Ann.(TypeNameAnnotationKey)
+	return MapAssignPrestring{
+		fldAnn.TypeDecl.Name(),
+	}
+}
+
+// MapAssignPrestring is a Prestring storing the needed information to compactly encode a MapAssign
+type MapAssignPrestring struct {
+	TypeName string
+}
+
+func (f MapAssignPrestring) String() string {
+	return fmt.Sprintf("assigned into a map of deeply nonnil type `%s`", f.TypeName)
 }
 
 // DeepAssignPrimitive is when a value flows to a point where it is assigned
@@ -516,9 +727,15 @@ type DeepAssignPrimitive struct {
 }
 
 // Prestring returns this Prestring as a Prestring
-func (*DeepAssignPrimitive) Prestring() Prestring {
-	message := "assigned into a deep type expecting nonnil element type"
-	return ErrorMessage{Text: message}
+func (DeepAssignPrimitive) Prestring() Prestring {
+	return DeepAssignPrimitivePrestring{}
+}
+
+// DeepAssignPrimitivePrestring is a Prestring storing the needed information to compactly encode a DeepAssignPrimitive
+type DeepAssignPrimitivePrestring struct{}
+
+func (DeepAssignPrimitivePrestring) String() string {
+	return "assigned into a deep type expecting nonnil element type"
 }
 
 // ParamAssignDeep is when a value flows to a point where it is assigned deeply into a function parameter
@@ -527,9 +744,17 @@ type ParamAssignDeep struct {
 }
 
 // Prestring returns this ParamAssignDeep as a Prestring
-func (p *ParamAssignDeep) Prestring() Prestring {
-	message := fmt.Sprintf("assigned deeply into parameter %s", p.Ann.(*ParamAnnotationKey).MinimalString())
-	return ErrorMessage{Text: message}
+func (p ParamAssignDeep) Prestring() Prestring {
+	return ParamAssignDeepPrestring{p.Ann.(ParamAnnotationKey).MinimalString()}
+}
+
+// ParamAssignDeepPrestring is a Prestring storing the needed information to compactly encode a ParamAssignDeep
+type ParamAssignDeepPrestring struct {
+	ParamName string
+}
+
+func (p ParamAssignDeepPrestring) String() string {
+	return fmt.Sprintf("assigned deeply into parameter %s", p.ParamName)
 }
 
 // FuncRetAssignDeep is when a value flows to a point where it is assigned deeply into a function return
@@ -538,10 +763,22 @@ type FuncRetAssignDeep struct {
 }
 
 // Prestring returns this FuncRetAssignDeep as a Prestring
-func (f *FuncRetAssignDeep) Prestring() Prestring {
-	retAnn := f.Ann.(*RetAnnotationKey)
-	message := fmt.Sprintf("assigned deeply into result %d of `%s()`", retAnn.RetNum, retAnn.FuncDecl.Name())
-	return ErrorMessage{Text: message}
+func (f FuncRetAssignDeep) Prestring() Prestring {
+	retAnn := f.Ann.(RetAnnotationKey)
+	return FuncRetAssignDeepPrestring{
+		retAnn.FuncDecl.Name(),
+		retAnn.RetNum,
+	}
+}
+
+// FuncRetAssignDeepPrestring is a Prestring storing the needed information to compactly encode a FuncRetAssignDeep
+type FuncRetAssignDeepPrestring struct {
+	FuncName string
+	RetNum   int
+}
+
+func (f FuncRetAssignDeepPrestring) String() string {
+	return fmt.Sprintf("assigned deeply into the result %d of `%s()`", f.RetNum, f.FuncName)
 }
 
 // VariadicParamAssignDeep is when a value flows to a point where it is assigned deeply into a variadic
@@ -551,10 +788,20 @@ type VariadicParamAssignDeep struct {
 }
 
 // Prestring returns this VariadicParamAssignDeep as a Prestring
-func (v *VariadicParamAssignDeep) Prestring() Prestring {
-	paramAnn := v.Ann.(*ParamAnnotationKey)
-	message := fmt.Sprintf("assigned deeply into variadic parameter `%s`", paramAnn.MinimalString())
-	return ErrorMessage{Text: message}
+func (v VariadicParamAssignDeep) Prestring() Prestring {
+	paramAnn := v.Ann.(ParamAnnotationKey)
+	return VariadicParamAssignDeepPrestring{
+		ParamName: paramAnn.MinimalString(),
+	}
+}
+
+// VariadicParamAssignDeepPrestring is a Prestring storing the needed information to compactly encode a VariadicParamAssignDeep
+type VariadicParamAssignDeepPrestring struct {
+	ParamName string
+}
+
+func (v VariadicParamAssignDeepPrestring) String() string {
+	return fmt.Sprintf("assigned deeply into variadic parameter `%s`", v.ParamName)
 }
 
 // FieldAssignDeep is when a value flows to a point where it is assigned deeply into a field
@@ -563,10 +810,18 @@ type FieldAssignDeep struct {
 }
 
 // Prestring returns this FieldAssignDeep as a Prestring
-func (f *FieldAssignDeep) Prestring() Prestring {
-	fldAnn := f.Ann.(*FieldAnnotationKey)
-	message := fmt.Sprintf("assigned deeply into field `%s`", fldAnn.FieldDecl.Name())
-	return ErrorMessage{Text: message}
+func (f FieldAssignDeep) Prestring() Prestring {
+	fldAnn := f.Ann.(FieldAnnotationKey)
+	return FieldAssignDeepPrestring{fldAnn.FieldDecl.Name()}
+}
+
+// FieldAssignDeepPrestring is a Prestring storing the needed information to compactly encode a FieldAssignDeep
+type FieldAssignDeepPrestring struct {
+	FldName string
+}
+
+func (f FieldAssignDeepPrestring) String() string {
+	return fmt.Sprintf("assigned deeply into field `%s`", f.FldName)
 }
 
 // GlobalVarAssignDeep is when a value flows to a point where it is assigned deeply into a global variable
@@ -575,10 +830,18 @@ type GlobalVarAssignDeep struct {
 }
 
 // Prestring returns this GlobalVarAssignDeep as a Prestring
-func (g *GlobalVarAssignDeep) Prestring() Prestring {
-	varAnn := g.Ann.(*GlobalVarAnnotationKey)
-	message := fmt.Sprintf("assigned deeply into global variable `%s`", varAnn.VarDecl.Name())
-	return ErrorMessage{Text: message}
+func (g GlobalVarAssignDeep) Prestring() Prestring {
+	varAnn := g.Ann.(GlobalVarAnnotationKey)
+	return GlobalVarAssignDeepPrestring{varAnn.VarDecl.Name()}
+}
+
+// GlobalVarAssignDeepPrestring is a Prestring storing the needed information to compactly encode a GlobalVarAssignDeep
+type GlobalVarAssignDeepPrestring struct {
+	VarName string
+}
+
+func (g GlobalVarAssignDeepPrestring) String() string {
+	return fmt.Sprintf("assigned deeply into global variable `%s`", g.VarName)
 }
 
 // ChanAccess is when a channel is accessed for sending, and thus must be non-nil
@@ -587,9 +850,15 @@ type ChanAccess struct {
 }
 
 // Prestring returns this MapWrittenTo as a Prestring
-func (c *ChanAccess) Prestring() Prestring {
-	message := "uninitialized; nil channel accessed"
-	return ErrorMessage{Text: message}
+func (c ChanAccess) Prestring() Prestring {
+	return ChanAccessPrestring{}
+}
+
+// ChanAccessPrestring is a Prestring storing the needed information to compactly encode a ChanAccess
+type ChanAccessPrestring struct{}
+
+func (ChanAccessPrestring) String() string {
+	return "uninitialized; nil channel accessed"
 }
 
 // LocalVarAssignDeep is when a value flows to a point where it is assigned deeply into a local variable of deeply nonnil type
@@ -599,9 +868,17 @@ type LocalVarAssignDeep struct {
 }
 
 // Prestring returns this LocalVarAssignDeep as a Prestring
-func (l *LocalVarAssignDeep) Prestring() Prestring {
-	message := fmt.Sprintf("assigned deeply into local variable `%s`", l.LocalVar.Name())
-	return ErrorMessage{Text: message}
+func (l LocalVarAssignDeep) Prestring() Prestring {
+	return LocalVarAssignDeepPrestring{VarName: l.LocalVar.Name()}
+}
+
+// LocalVarAssignDeepPrestring is a Prestring storing the needed information to compactly encode a LocalVarAssignDeep
+type LocalVarAssignDeepPrestring struct {
+	VarName string
+}
+
+func (l LocalVarAssignDeepPrestring) String() string {
+	return fmt.Sprintf("assigned deeply into local variable `%s`", l.VarName)
 }
 
 // ChanSend is when a value flows to a point where it is sent to a channel
@@ -610,10 +887,18 @@ type ChanSend struct {
 }
 
 // Prestring returns this ChanSend as a Prestring
-func (c *ChanSend) Prestring() Prestring {
-	typeAnn := c.Ann.(*TypeNameAnnotationKey)
-	message := fmt.Sprintf("sent to channel of deeply nonnil type `%s`", typeAnn.TypeDecl.Name())
-	return ErrorMessage{Text: message}
+func (c ChanSend) Prestring() Prestring {
+	typeAnn := c.Ann.(TypeNameAnnotationKey)
+	return ChanSendPrestring{typeAnn.TypeDecl.Name()}
+}
+
+// ChanSendPrestring is a Prestring storing the needed information to compactly encode a ChanSend
+type ChanSendPrestring struct {
+	TypeName string
+}
+
+func (c ChanSendPrestring) String() string {
+	return fmt.Sprintf("sent to channel of deeply nonnil type `%s`", c.TypeName)
 }
 
 // FldEscape is when a nilable value flows through a field of a struct that escapes.
@@ -629,10 +914,20 @@ type FldEscape struct {
 }
 
 // Prestring returns this FldEscape as a Prestring
-func (f *FldEscape) Prestring() Prestring {
-	ann := f.Ann.(*EscapeFieldAnnotationKey)
-	message := fmt.Sprintf("field `%s` escaped out of our analysis scope (presumed nilable)", ann.FieldDecl.Name())
-	return ErrorMessage{Text: message}
+func (f FldEscape) Prestring() Prestring {
+	ann := f.Ann.(EscapeFieldAnnotationKey)
+	return FldEscapePrestring{
+		FieldName: ann.FieldDecl.Name(),
+	}
+}
+
+// FldEscapePrestring is a Prestring storing the needed information to compactly encode a FldEscape
+type FldEscapePrestring struct {
+	FieldName string
+}
+
+func (f FldEscapePrestring) String() string {
+	return fmt.Sprintf("field `%s` escaped out of our analysis scope (presumed nilable)", f.FieldName)
 }
 
 // UseAsNonErrorRetDependentOnErrorRetNilability is when a value flows to a point where it is returned from an error returning function
@@ -644,16 +939,34 @@ type UseAsNonErrorRetDependentOnErrorRetNilability struct {
 }
 
 // Prestring returns this UseAsNonErrorRetDependentOnErrorRetNilability as a Prestring
-func (u *UseAsNonErrorRetDependentOnErrorRetNilability) Prestring() Prestring {
-	retAnn := u.Ann.(*RetAnnotationKey)
+func (u UseAsNonErrorRetDependentOnErrorRetNilability) Prestring() Prestring {
+	retAnn := u.Ann.(RetAnnotationKey)
+	return UseAsNonErrorRetDependentOnErrorRetNilabilityPrestring{
+		retAnn.FuncDecl.Name(),
+		retAnn.RetNum,
+		retAnn.FuncDecl.Type().(*types.Signature).Results().At(retAnn.RetNum).Name(),
+		retAnn.FuncDecl.Type().(*types.Signature).Results().Len() - 1,
+		u.IsNamedReturn,
+	}
+}
 
+// UseAsNonErrorRetDependentOnErrorRetNilabilityPrestring is a Prestring storing the needed information to compactly encode a UseAsNonErrorRetDependentOnErrorRetNilability
+type UseAsNonErrorRetDependentOnErrorRetNilabilityPrestring struct {
+	FuncName      string
+	RetNum        int
+	RetName       string
+	ErrRetNum     int
+	IsNamedReturn bool
+}
+
+func (u UseAsNonErrorRetDependentOnErrorRetNilabilityPrestring) String() string {
 	via := ""
 	if u.IsNamedReturn {
-		via = fmt.Sprintf(" via named return `%s`", retAnn.FuncDecl.Type().(*types.Signature).Results().At(retAnn.RetNum).Name())
+		via = fmt.Sprintf(" via the named return value `%s`", u.RetName)
 	}
-	message := fmt.Sprintf("returned from `%s()`%s in position %d when the error return in position %d is not guaranteed to be non-nil through all paths",
-		retAnn.FuncDecl.Name(), via, retAnn.RetNum, retAnn.FuncDecl.Type().(*types.Signature).Results().Len()-1)
-	return ErrorMessage{Text: message}
+
+	return fmt.Sprintf("returned from `%s()`%s in position %d when the error return in position %d is not guaranteed to be non-nil through all paths",
+		u.FuncName, via, u.RetNum, u.ErrRetNum)
 }
 
 // overriding position value to point to the raw return statement, which is the source of the potential error
@@ -673,17 +986,29 @@ type UseAsErrorRetWithNilabilityUnknown struct {
 }
 
 // Prestring returns this UseAsErrorRetWithNilabilityUnknown as a Prestring
-func (u *UseAsErrorRetWithNilabilityUnknown) Prestring() Prestring {
-	retAnn := u.Ann.(*RetAnnotationKey)
-
-	message := ""
-	if u.IsNamedReturn {
-		message = fmt.Sprintf("found in at least one path of `%s()` for the named return `%s` in position %d",
-			retAnn.FuncDecl.Name(), retAnn.FuncDecl.Type().(*types.Signature).Results().At(retAnn.RetNum).Name(), retAnn.RetNum)
-	} else {
-		message = fmt.Sprintf("found in at least one path of `%s()` for the return in position %d", retAnn.FuncDecl.Name(), retAnn.RetNum)
+func (u UseAsErrorRetWithNilabilityUnknown) Prestring() Prestring {
+	retAnn := u.Ann.(RetAnnotationKey)
+	return UseAsErrorRetWithNilabilityUnknownPrestring{
+		retAnn.FuncDecl.Name(),
+		retAnn.RetNum,
+		u.IsNamedReturn,
+		retAnn.FuncDecl.Type().(*types.Signature).Results().At(retAnn.RetNum).Name(),
 	}
-	return ErrorMessage{Text: message}
+}
+
+// UseAsErrorRetWithNilabilityUnknownPrestring is a Prestring storing the needed information to compactly encode a UseAsErrorRetWithNilabilityUnknown
+type UseAsErrorRetWithNilabilityUnknownPrestring struct {
+	FuncName      string
+	RetNum        int
+	IsNamedReturn bool
+	RetName       string
+}
+
+func (u UseAsErrorRetWithNilabilityUnknownPrestring) String() string {
+	if u.IsNamedReturn {
+		return fmt.Sprintf("found in at least one path of `%s()` for the named return `%s` in position %d", u.FuncName, u.RetName, u.RetNum)
+	}
+	return fmt.Sprintf("found in at least one path of `%s()` for the return in position %d", u.FuncName, u.RetNum)
 }
 
 // overriding position value to point to the raw return statement, which is the source of the potential error
