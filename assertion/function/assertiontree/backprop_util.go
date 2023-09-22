@@ -695,7 +695,7 @@ func blocksAndPreprocessingFromCFG(
 				&preprocessPair{
 					trueBranchFunc: func(node *RootAssertionNode) { // producing ranging expression as nonnil
 						node.AddProduction(&annotation.ProduceTrigger{
-							Annotation: annotation.RangeOver{},
+							Annotation: &annotation.RangeOver{},
 							Expr:       rangeExpr,
 						})
 					},

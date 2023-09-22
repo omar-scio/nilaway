@@ -39,6 +39,9 @@ type Key interface {
 	// These get stored into PrimitiveAnnotationKeys - so KEEP THEM COMPACT
 	// a good guideline would be the length of their name plus no more than 10 characters
 	String() string
+
+	// Equals returns true if the passed key is equal to this key
+	Equals(Key) bool
 }
 
 // FieldAnnotationKey allows the Lookup of a field's Annotation in the Annotation map
@@ -57,6 +60,14 @@ func (k *FieldAnnotationKey) Lookup(annMap Map) (Val, bool) {
 // Object returns the types.Object that this annotation can best be interpreted as annotating
 func (k *FieldAnnotationKey) Object() types.Object {
 	return k.FieldDecl
+}
+
+// Equals returns true if the passed key is equal to this key
+func (k *FieldAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*FieldAnnotationKey); ok {
+		return *k == *other
+	}
+	return false
 }
 
 func (k *FieldAnnotationKey) String() string {
@@ -94,6 +105,14 @@ func (pk *CallSiteParamAnnotationKey) Lookup(annMap Map) (Val, bool) {
 // Object returns the types.Object that this annotation can best be interpreted as annotating.
 func (pk *CallSiteParamAnnotationKey) Object() types.Object {
 	return pk.FuncDecl
+}
+
+// Equals returns true if the passed key is equal to this key
+func (pk *CallSiteParamAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*CallSiteParamAnnotationKey); ok {
+		return *pk == *other
+	}
+	return false
 }
 
 func (pk *CallSiteParamAnnotationKey) String() string {
@@ -214,6 +233,14 @@ func (pk *ParamAnnotationKey) Object() types.Object {
 	return pk.FuncDecl
 }
 
+// Equals returns true if the passed key is equal to this key
+func (pk *ParamAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*ParamAnnotationKey); ok {
+		return *pk == *other
+	}
+	return false
+}
+
 func (pk *ParamAnnotationKey) String() string {
 	argname := ""
 	if pk.ParamName() != nil {
@@ -267,6 +294,14 @@ func (rk *CallSiteRetAnnotationKey) Object() types.Object {
 	return rk.FuncDecl
 }
 
+// Equals returns true if the passed key is equal to this key
+func (rk *CallSiteRetAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*CallSiteRetAnnotationKey); ok {
+		return *rk == *other
+	}
+	return false
+}
+
 func (rk *CallSiteRetAnnotationKey) String() string {
 	return fmt.Sprintf("Result %d of Function %s at Location %v",
 		rk.RetNum, rk.FuncDecl.Name(), rk.Location)
@@ -301,6 +336,14 @@ func (rk *RetAnnotationKey) Object() types.Object {
 	return rk.FuncDecl
 }
 
+// Equals returns true if the passed key is equal to this key
+func (rk *RetAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*RetAnnotationKey); ok {
+		return *rk == *other
+	}
+	return false
+}
+
 func (rk *RetAnnotationKey) String() string {
 	return fmt.Sprintf("Result %d of Function %s",
 		rk.RetNum, rk.FuncDecl.Name())
@@ -332,6 +375,14 @@ func (tk *TypeNameAnnotationKey) Object() types.Object {
 	return tk.TypeDecl
 }
 
+// Equals returns true if the passed key is equal to this key
+func (tk *TypeNameAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*TypeNameAnnotationKey); ok {
+		return *tk == *other
+	}
+	return false
+}
+
 func (tk *TypeNameAnnotationKey) String() string {
 	return fmt.Sprintf("Type %s", tk.TypeDecl.Name())
 }
@@ -352,6 +403,14 @@ func (gk *GlobalVarAnnotationKey) Lookup(annMap Map) (Val, bool) {
 // Object returns the types.Object that this annotation can best be interpreted as annotating
 func (gk *GlobalVarAnnotationKey) Object() types.Object {
 	return gk.VarDecl
+}
+
+// Equals returns true if the passed key is equal to this key
+func (gk *GlobalVarAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*GlobalVarAnnotationKey); ok {
+		return *gk == *other
+	}
+	return false
 }
 
 func (gk *GlobalVarAnnotationKey) String() string {
@@ -380,6 +439,14 @@ func (rf *RetFieldAnnotationKey) Lookup(_ Map) (Val, bool) {
 // Object returns the types.Object that this annotation can best be interpreted as annotating
 func (rf *RetFieldAnnotationKey) Object() types.Object {
 	return rf.FuncDecl
+}
+
+// Equals returns true if the passed key is equal to this key
+func (rf *RetFieldAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*RetFieldAnnotationKey); ok {
+		return *rf == *other
+	}
+	return false
 }
 
 // String returns a string representation of this annotation key
@@ -423,6 +490,14 @@ func (ek *EscapeFieldAnnotationKey) Lookup(_ Map) (Val, bool) {
 // Object returns the types.Object that this annotation can best be interpreted as annotating
 func (ek *EscapeFieldAnnotationKey) Object() types.Object {
 	return ek.FieldDecl
+}
+
+// Equals returns true if the passed key is equal to this key
+func (ek *EscapeFieldAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*EscapeFieldAnnotationKey); ok {
+		return *ek == *other
+	}
+	return false
 }
 
 func (ek *EscapeFieldAnnotationKey) String() string {
@@ -477,6 +552,14 @@ func (pf *ParamFieldAnnotationKey) Object() types.Object {
 	return pf.FuncDecl
 }
 
+// Equals returns true if the passed key is equal to this key
+func (pf *ParamFieldAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*ParamFieldAnnotationKey); ok {
+		return *pf == *other
+	}
+	return false
+}
+
 // String returns a string representation of this annotation key for ParamFieldAnnotationKey
 func (pf *ParamFieldAnnotationKey) String() string {
 	argName := ""
@@ -524,6 +607,14 @@ func (rk *RecvAnnotationKey) Object() types.Object {
 // Exported returns true iff this annotation is observable by downstream packages
 func (rk *RecvAnnotationKey) Exported() bool {
 	return rk.FuncDecl.Exported()
+}
+
+// Equals returns true if the passed key is equal to this key
+func (rk *RecvAnnotationKey) Equals(other Key) bool {
+	if other, ok := other.(*RecvAnnotationKey); ok {
+		return *rk == *other
+	}
+	return false
 }
 
 func (rk *RecvAnnotationKey) String() string {

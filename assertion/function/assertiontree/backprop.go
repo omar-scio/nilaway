@@ -356,7 +356,7 @@ func backpropAcrossRange(rootNode *RootAssertionNode, lhs []ast.Expr, rhs ast.Ex
 		// if nonempty, produce the index as definitely non-nil
 		if !util.IsEmptyExpr(lhs[i]) {
 			rootNode.AddProduction(&annotation.ProduceTrigger{
-				Annotation: annotation.RangeIndexAssignment{},
+				Annotation: &annotation.RangeIndexAssignment{},
 				Expr:       lhs[i],
 			})
 		}
@@ -883,7 +883,7 @@ func BackpropAcrossFunc(ctx context.Context, pass *analysis.Pass, decl *ast.Func
 
 		if nextRootAssertionNode == nil && currRootAssertionNode == nil ||
 			(nextRootAssertionNode != nil && currRootAssertionNode != nil &&
-				annotation.FullTriggerSlicesEq(nextRootAssertionNode.triggers, currRootAssertionNode.triggers)) {
+				annotation.FullTriggerSlicesEq(pass, nextRootAssertionNode.triggers, currRootAssertionNode.triggers)) {
 			stableRoundCount++
 		} else {
 			stableRoundCount = 0

@@ -16,9 +16,7 @@ package annotation
 
 import (
 	"fmt"
-	"go/ast"
 	"go/token"
-	"reflect"
 
 	"go.uber.org/nilaway/util"
 	"golang.org/x/tools/go/analysis"
@@ -114,8 +112,10 @@ func (t *FullTrigger) Prestrings(pass *analysis.Pass) (Prestring, Prestring) {
 	return producerPrestring, consumerPrestring
 }
 
-// fullTriggerKey serves as a key for implementing a visited map in FullTriggerSlicesEq()
-// It serves to check equality on the following properties of FullTriggers:
+// FullTriggerSlicesEq returns true if the two passed slices of FullTriggers contain the same elements. It determines if
+// assertion trees have stabilized during the primary fixpoint loop in `BackpropAcrossFunc`
+// (precondition: no duplications)
+// The equality of two FullTriggers is determined by four parameters:
 // 1) Producer Annotation - this is the first half of the assertion on annotations represented by the trigger
 // 2) Consumer Annotation - this is the second half of the assertion on annotations represented
 // 3) Consumer Expression - this distinguishes triggers that represent the same assertion but should
@@ -125,103 +125,49 @@ func (t *FullTrigger) Prestrings(pass *analysis.Pass) (Prestring, Prestring) {
 // RootAssertionNode.ProcessEntry can use checkGuardOnFullTrigger to rewrite the producer based on
 // its value. So if you accept that the producer is needed for equality, you accept that
 // Consumer.GuardMatched is needed for equality.
-type fullTriggerKey struct {
-	prodAnn       ProducingAnnotationTrigger
-	consAnn       ConsumingAnnotationTrigger
-	consExpr      ast.Expr
-	guardsMatched bool
-}
-
-// key returns a new fullTriggerKey from the given full trigger
-func (t *FullTrigger) key() fullTriggerKey {
-	return fullTriggerKey{
-		prodAnn:       t.Producer.Annotation,
-		consAnn:       t.Consumer.Annotation,
-		consExpr:      t.Consumer.Expr,
-		guardsMatched: t.Consumer.GuardMatched,
-	}
-}
-
-// FullTriggerSlicesEq returns true if the two passed slices of FullTriggers contain the same elements. It determines if
-// assertion trees have stabilized during the primary fixpoint loop in `BackpropAcrossFunc`
-// (precondition: no duplications)
-func FullTriggerSlicesEq(left, right []FullTrigger) bool {
+func FullTriggerSlicesEq(pass *analysis.Pass, left, right []FullTrigger) bool {
 	if len(left) != len(right) {
 		return false
 	}
 
-	// // because we have two sets of the same size, without repetition, to test equality it suffices
-	// // to check that one of them contains the other
-	// visited := make(map[fullTriggerKey]bool)
-	// for _, t := range left {
-	// 	key := t.key()
-	// 	visited[key] = true
-	// }
-	//
-	// for _, t := range right {
-	// 	key := t.key()
-	// 	if _, ok := visited[key]; !ok {
-	// 		return false
-	// 	}
-	// }
-	// return true
-
-	return reflect.DeepEqual(left, right)
-}
-
-// fullTriggerKeyModGuarding is a subset of fullTriggerKey and serves as a key for implementing a visited map in MergeFullTriggers(). The three fields are chosen based
-// on the fact that we merge two full triggers that disagree only on Consumer.GuardMatched into a single trigger with
-// Consume.GuardMatched = false. In all other cases - such as checking fixed point in propagation, the function FullTriggersEq
-// that does observe GuardMatched should be used instead of this function.
-// TODO: support implementation of triggers as a set using only this key
-type fullTriggerKeyModGuarding struct {
-	prodAnn  ProducingAnnotationTrigger
-	consAnn  ConsumingAnnotationTrigger
-	consExpr ast.Expr
-}
-
-// keyModGuarding returns a new fullTriggerKeyModGuarding from the given full trigger
-func (t *FullTrigger) keyModGuarding() fullTriggerKeyModGuarding {
-	return fullTriggerKeyModGuarding{
-		prodAnn:  t.Producer.Annotation,
-		consAnn:  t.Consumer.Annotation,
-		consExpr: t.Consumer.Expr,
+	// because we have two sets of the same size, without repetition, to test equality it suffices
+	// to check that one of them contains the other
+	matched := make(map[int]bool)
+	for _, l := range left {
+		for j, r := range right {
+			if l.Producer.Annotation.Equals(r.Producer.Annotation) &&
+				l.Consumer.Annotation.Equals(r.Consumer.Annotation) &&
+				l.Consumer.Expr == r.Consumer.Expr &&
+				l.Consumer.GuardMatched == r.Consumer.GuardMatched {
+				matched[j] = true
+				break
+			}
+		}
 	}
+	return len(matched) == len(left)
 }
 
 // MergeFullTriggers creates a union of the passed left and right triggers eliminating duplicates
-func MergeFullTriggers(left []FullTrigger, right ...FullTrigger) []FullTrigger {
-	// totalLen := len(left) + len(right)
-	// out := make([]FullTrigger, 0, totalLen)
-	// visited := make(map[fullTriggerKeyModGuarding]int, totalLen) // stores the visited triggers keyed by fullTriggerKeyModGuarding, and value is the index of the trigger in `out`
-	//
-	// for _, triggers := range [...][]FullTrigger{left, right} {
-	// 	for _, t := range triggers {
-	// 		key := t.keyModGuarding()
-	// 		if v, ok := visited[key]; ok {
-	// 			if out[v].Consumer.GuardMatched && !t.Consumer.GuardMatched {
-	// 				// Right now, there is no use for guards in FullTriggers. If this changes, then make sure the merged trigger gets the intersection of the prior guard sets
-	// 				out[v].Consumer.Guards = util.NoGuards()
-	// 				out[v].Consumer.GuardMatched = false
-	// 			}
-	// 		} else {
-	// 			out = append(out, t)
-	// 			visited[key] = len(out) - 1
-	// 		}
-	// 	}
-	// }
-
+// Merging is based on three parameters (out of the four discussed above):
+// 1) Producer Annotation
+// 2) Consumer Annotation
+// 3) Consumer Expression
+// The three parameters are chosen based on the fact that we merge two full triggers that disagree only on
+// Consumer.GuardMatched into a single trigger with Consume.GuardMatched = false. In all other cases - such as
+// checking fixed point in propagation, the function FullTriggersEq
+// that does observe GuardMatched should be used instead of this function.
+func MergeFullTriggers(pass *analysis.Pass, left []FullTrigger, right ...FullTrigger) []FullTrigger {
 	var out []FullTrigger
-	toUpdateLeftGuard := make(map[int]bool)
+	updateLeftGuard := make(map[int]bool)
 	skipRight := make(map[int]bool)
 
 	for i, l := range left {
 		for j, r := range right {
-			if reflect.DeepEqual(l.Producer.Annotation, r.Producer.Annotation) &&
-				reflect.DeepEqual(l.Consumer.Annotation, r.Consumer.Annotation) &&
+			if l.Producer.Annotation.Equals(r.Producer.Annotation) &&
+				l.Consumer.Annotation.Equals(r.Consumer.Annotation) &&
 				l.Consumer.Expr == r.Consumer.Expr {
-				if l.Consumer.GuardMatched != r.Consumer.GuardMatched {
-					toUpdateLeftGuard[i] = true
+				if l.Consumer.GuardMatched && !r.Consumer.GuardMatched {
+					updateLeftGuard[i] = true
 				} else {
 					skipRight[j] = true
 				}
@@ -230,7 +176,7 @@ func MergeFullTriggers(left []FullTrigger, right ...FullTrigger) []FullTrigger {
 	}
 
 	for i, l := range left {
-		if toUpdateLeftGuard[i] {
+		if updateLeftGuard[i] {
 			l.Consumer.Guards = util.NoGuards()
 			l.Consumer.GuardMatched = false
 		}

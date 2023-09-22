@@ -19,7 +19,6 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
-	"reflect"
 	"strings"
 
 	"go.uber.org/nilaway/util"
@@ -51,6 +50,9 @@ type ConsumingAnnotationTrigger interface {
 	UnderlyingSite() Key
 
 	customPos() (token.Pos, bool)
+
+	// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+	Equals(ConsumingAnnotationTrigger) bool
 }
 
 // customPos has the below default implementations, in which case ConsumeTrigger.Pos() will return a default value.
@@ -83,6 +85,26 @@ func (t *TriggerIfNonNil) CheckConsume(annMap Map) bool {
 	return ok && !ann.IsNilable
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (t *TriggerIfNonNil) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*TriggerIfNonNil); ok {
+		return t.Ann.Equals(other.Ann)
+	}
+	return false
+}
+
+// Prestring returns this Prestring as a Prestring
+func (*TriggerIfNonNil) Prestring() Prestring {
+	return TriggerIfNonNilPrestring{}
+}
+
+// TriggerIfNonNilPrestring is a Prestring storing the needed information to compactly encode a TriggerIfNonNil
+type TriggerIfNonNilPrestring struct{}
+
+func (TriggerIfNonNilPrestring) String() string {
+	return "nonnil value"
+}
+
 // TriggerIfDeepNonNil is triggered if the contained Annotation is deeply non-nil
 type TriggerIfDeepNonNil struct {
 	Ann Key
@@ -100,6 +122,26 @@ func (t *TriggerIfDeepNonNil) CheckConsume(annMap Map) bool {
 	return ok && !ann.IsDeepNilable
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (t *TriggerIfDeepNonNil) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*TriggerIfDeepNonNil); ok {
+		return t.Ann.Equals(other.Ann)
+	}
+	return false
+}
+
+// Prestring returns this Prestring as a Prestring
+func (*TriggerIfDeepNonNil) Prestring() Prestring {
+	return TriggerIfDeepNonNilPrestring{}
+}
+
+// TriggerIfDeepNonNilPrestring is a Prestring storing the needed information to compactly encode a TriggerIfDeepNonNil
+type TriggerIfDeepNonNilPrestring struct{}
+
+func (TriggerIfDeepNonNilPrestring) String() string {
+	return "deeply nonnil value"
+}
+
 // ConsumeTriggerTautology is used at consumption sites were consuming nil is always an error
 type ConsumeTriggerTautology struct{}
 
@@ -114,9 +156,35 @@ func (*ConsumeTriggerTautology) CheckConsume(Map) bool {
 	return true
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (*ConsumeTriggerTautology) Equals(other ConsumingAnnotationTrigger) bool {
+	_, ok := other.(*ConsumeTriggerTautology)
+	return ok
+}
+
+// Prestring returns this Prestring as a Prestring
+func (*ConsumeTriggerTautology) Prestring() Prestring {
+	return ConsumeTriggerTautologyPrestring{}
+}
+
+// ConsumeTriggerTautologyPrestring is a Prestring storing the needed information to compactly encode a ConsumeTriggerTautology
+type ConsumeTriggerTautologyPrestring struct{}
+
+func (ConsumeTriggerTautologyPrestring) String() string {
+	return "must be nonnil"
+}
+
 // PtrLoad is when a value flows to a point where it is loaded as a pointer
 type PtrLoad struct {
 	*ConsumeTriggerTautology
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (p *PtrLoad) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*PtrLoad); ok {
+		return p.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+	}
+	return false
 }
 
 // Prestring returns this PtrLoad as a Prestring
@@ -138,6 +206,14 @@ type MapAccess struct {
 	*ConsumeTriggerTautology
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (i *MapAccess) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*PtrLoad); ok {
+		return i.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+	}
+	return false
+}
+
 // Prestring returns this MapAccess as a Prestring
 func (i *MapAccess) Prestring() Prestring {
 	return MapAccessPrestring{}
@@ -154,6 +230,14 @@ func (MapAccessPrestring) String() string {
 // must be non-nil
 type MapWrittenTo struct {
 	*ConsumeTriggerTautology
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (m *MapWrittenTo) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*MapWrittenTo); ok {
+		return m.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+	}
+	return false
 }
 
 // Prestring returns this MapWrittenTo as a Prestring
@@ -173,6 +257,14 @@ type SliceAccess struct {
 	*ConsumeTriggerTautology
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (s *SliceAccess) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*SliceAccess); ok {
+		return s.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+	}
+	return false
+}
+
 // Prestring returns this SliceAccess as a Prestring
 func (s *SliceAccess) Prestring() Prestring {
 	return SliceAccessPrestring{}
@@ -190,6 +282,14 @@ type FldAccess struct {
 	*ConsumeTriggerTautology
 
 	Sel types.Object
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (f *FldAccess) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*FldAccess); ok {
+		return f.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology) && f.Sel == other.Sel
+	}
+	return false
 }
 
 // Prestring returns this FldAccess as a Prestring
@@ -231,6 +331,16 @@ type UseAsErrorResult struct {
 	IsNamedReturn bool
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (u *UseAsErrorResult) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*UseAsErrorResult); ok {
+		return u.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+			u.RetStmt == other.RetStmt &&
+			u.IsNamedReturn == other.IsNamedReturn
+	}
+	return false
+}
+
 // Prestring returns this UseAsErrorResult as a Prestring
 func (u *UseAsErrorResult) Prestring() Prestring {
 	retAnn := u.Ann.(*RetAnnotationKey)
@@ -270,6 +380,14 @@ type FldAssign struct {
 	*TriggerIfNonNil
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (f *FldAssign) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*FldAssign); ok {
+		return f.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+	}
+	return false
+}
+
 // Prestring returns this FldAssign as a Prestring
 func (f *FldAssign) Prestring() Prestring {
 	fldAnn := f.Ann.(*FieldAnnotationKey)
@@ -292,6 +410,14 @@ func (f FldAssignPrestring) String() string {
 type ArgFldPass struct {
 	*TriggerIfNonNil
 	IsPassed bool
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (f *ArgFldPass) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*ArgFldPass); ok {
+		return f.TriggerIfNonNil.Equals(other.TriggerIfNonNil) && f.IsPassed == other.IsPassed
+	}
+	return false
 }
 
 // Prestring returns this ArgFldPass as a Prestring
@@ -337,6 +463,14 @@ type GlobalVarAssign struct {
 	*TriggerIfNonNil
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (g *GlobalVarAssign) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*GlobalVarAssign); ok {
+		return g.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+	}
+	return false
+}
+
 // Prestring returns this GlobalVarAssign as a Prestring
 func (g *GlobalVarAssign) Prestring() Prestring {
 	varAnn := g.Ann.(*GlobalVarAnnotationKey)
@@ -362,6 +496,14 @@ func (g GlobalVarAssignPrestring) String() string {
 // duplicate the sites for context sensitivity.
 type ArgPass struct {
 	*TriggerIfNonNil
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (a *ArgPass) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*ArgPass); ok {
+		return a.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+	}
+	return false
 }
 
 // Prestring returns this ArgPass as a Prestring
@@ -409,6 +551,14 @@ type RecvPass struct {
 	*TriggerIfNonNil
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (a *RecvPass) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*RecvPass); ok {
+		return a.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+	}
+	return false
+}
+
 // Prestring returns this RecvPass as a Prestring
 func (a *RecvPass) Prestring() Prestring {
 	recvAnn := a.Ann.(*RecvAnnotationKey)
@@ -430,6 +580,16 @@ func (a RecvPassPrestring) String() string {
 type InterfaceResultFromImplementation struct {
 	*TriggerIfNonNil
 	*AffiliationPair
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (i *InterfaceResultFromImplementation) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*InterfaceResultFromImplementation); ok {
+		return i.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+			i.AffiliationPair.InterfaceMethod == other.AffiliationPair.InterfaceMethod &&
+			i.AffiliationPair.ImplementingMethod == other.AffiliationPair.ImplementingMethod
+	}
+	return false
 }
 
 // Prestring returns this InterfaceResultFromImplementation as a Prestring
@@ -458,6 +618,16 @@ func (i InterfaceResultFromImplementationPrestring) String() string {
 type MethodParamFromInterface struct {
 	*TriggerIfNonNil
 	*AffiliationPair
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (m *MethodParamFromInterface) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*MethodParamFromInterface); ok {
+		return m.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+			m.AffiliationPair.InterfaceMethod == other.AffiliationPair.InterfaceMethod &&
+			m.AffiliationPair.ImplementingMethod == other.AffiliationPair.ImplementingMethod
+	}
+	return false
 }
 
 // Prestring returns this MethodParamFromInterface as a Prestring
@@ -509,6 +679,16 @@ type UseAsReturn struct {
 	*TriggerIfNonNil
 	IsNamedReturn bool
 	RetStmt       *ast.ReturnStmt
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (u *UseAsReturn) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*UseAsReturn); ok {
+		return u.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+			u.IsNamedReturn == other.IsNamedReturn &&
+			u.RetStmt == other.RetStmt
+	}
+	return false
 }
 
 // Prestring returns this UseAsReturn as a Prestring
@@ -575,6 +755,14 @@ type UseAsFldOfReturn struct {
 	*TriggerIfNonNil
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (u *UseAsFldOfReturn) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*UseAsFldOfReturn); ok {
+		return u.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+	}
+	return false
+}
+
 // Prestring returns this UseAsFldOfReturn as a Prestring
 func (u *UseAsFldOfReturn) Prestring() Prestring {
 	retAnn := u.Ann.(*RetFieldAnnotationKey)
@@ -637,6 +825,14 @@ type SliceAssign struct {
 	*TriggerIfDeepNonNil
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (f *SliceAssign) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*SliceAssign); ok {
+		return f.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+	}
+	return false
+}
+
 // Prestring returns this SliceAssign as a Prestring
 func (f *SliceAssign) Prestring() Prestring {
 	fldAnn := f.Ann.(*TypeNameAnnotationKey)
@@ -657,6 +853,14 @@ func (f SliceAssignPrestring) String() string {
 // ArrayAssign is when a value flows to a point where it is assigned into an array
 type ArrayAssign struct {
 	*TriggerIfDeepNonNil
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (a *ArrayAssign) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*ArrayAssign); ok {
+		return a.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+	}
+	return false
 }
 
 // Prestring returns this ArrayAssign as a Prestring
@@ -681,6 +885,14 @@ type PtrAssign struct {
 	*TriggerIfDeepNonNil
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (f *PtrAssign) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*PtrAssign); ok {
+		return f.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+	}
+	return false
+}
+
 // Prestring returns this PtrAssign as a Prestring
 func (f *PtrAssign) Prestring() Prestring {
 	fldAnn := f.Ann.(*TypeNameAnnotationKey)
@@ -701,6 +913,14 @@ func (f PtrAssignPrestring) String() string {
 // MapAssign is when a value flows to a point where it is assigned into an annotated map
 type MapAssign struct {
 	*TriggerIfDeepNonNil
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (f *MapAssign) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*MapAssign); ok {
+		return f.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+	}
+	return false
 }
 
 // Prestring returns this MapAssign as a Prestring
@@ -726,6 +946,14 @@ type DeepAssignPrimitive struct {
 	*ConsumeTriggerTautology
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (d *DeepAssignPrimitive) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*DeepAssignPrimitive); ok {
+		return d.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+	}
+	return false
+}
+
 // Prestring returns this Prestring as a Prestring
 func (*DeepAssignPrimitive) Prestring() Prestring {
 	return DeepAssignPrimitivePrestring{}
@@ -741,6 +969,14 @@ func (DeepAssignPrimitivePrestring) String() string {
 // ParamAssignDeep is when a value flows to a point where it is assigned deeply into a function parameter
 type ParamAssignDeep struct {
 	*TriggerIfDeepNonNil
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (p *ParamAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*ParamAssignDeep); ok {
+		return p.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+	}
+	return false
 }
 
 // Prestring returns this ParamAssignDeep as a Prestring
@@ -760,6 +996,14 @@ func (p ParamAssignDeepPrestring) String() string {
 // FuncRetAssignDeep is when a value flows to a point where it is assigned deeply into a function return
 type FuncRetAssignDeep struct {
 	*TriggerIfDeepNonNil
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (f *FuncRetAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*FuncRetAssignDeep); ok {
+		return f.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+	}
+	return false
 }
 
 // Prestring returns this FuncRetAssignDeep as a Prestring
@@ -787,6 +1031,14 @@ type VariadicParamAssignDeep struct {
 	*TriggerIfNonNil
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (v *VariadicParamAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*VariadicParamAssignDeep); ok {
+		return v.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+	}
+	return false
+}
+
 // Prestring returns this VariadicParamAssignDeep as a Prestring
 func (v *VariadicParamAssignDeep) Prestring() Prestring {
 	paramAnn := v.Ann.(*ParamAnnotationKey)
@@ -809,6 +1061,14 @@ type FieldAssignDeep struct {
 	*TriggerIfDeepNonNil
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (f *FieldAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*FieldAssignDeep); ok {
+		return f.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+	}
+	return false
+}
+
 // Prestring returns this FieldAssignDeep as a Prestring
 func (f *FieldAssignDeep) Prestring() Prestring {
 	fldAnn := f.Ann.(*FieldAnnotationKey)
@@ -827,6 +1087,14 @@ func (f FieldAssignDeepPrestring) String() string {
 // GlobalVarAssignDeep is when a value flows to a point where it is assigned deeply into a global variable
 type GlobalVarAssignDeep struct {
 	*TriggerIfDeepNonNil
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (g *GlobalVarAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*GlobalVarAssignDeep); ok {
+		return g.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+	}
+	return false
 }
 
 // Prestring returns this GlobalVarAssignDeep as a Prestring
@@ -849,6 +1117,14 @@ type ChanAccess struct {
 	*ConsumeTriggerTautology
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (c *ChanAccess) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*ChanAccess); ok {
+		return c.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+	}
+	return false
+}
+
 // Prestring returns this MapWrittenTo as a Prestring
 func (c *ChanAccess) Prestring() Prestring {
 	return ChanAccessPrestring{}
@@ -865,6 +1141,14 @@ func (ChanAccessPrestring) String() string {
 type LocalVarAssignDeep struct {
 	*ConsumeTriggerTautology
 	LocalVar *types.Var
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (l *LocalVarAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*LocalVarAssignDeep); ok {
+		return l.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology) && l.LocalVar == other.LocalVar
+	}
+	return false
 }
 
 // Prestring returns this LocalVarAssignDeep as a Prestring
@@ -884,6 +1168,14 @@ func (l LocalVarAssignDeepPrestring) String() string {
 // ChanSend is when a value flows to a point where it is sent to a channel
 type ChanSend struct {
 	*TriggerIfDeepNonNil
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (c *ChanSend) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*ChanSend); ok {
+		return c.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+	}
+	return false
 }
 
 // Prestring returns this ChanSend as a Prestring
@@ -913,6 +1205,14 @@ type FldEscape struct {
 	*TriggerIfNonNil
 }
 
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (f *FldEscape) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*FldEscape); ok {
+		return f.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+	}
+	return false
+}
+
 // Prestring returns this FldEscape as a Prestring
 func (f *FldEscape) Prestring() Prestring {
 	ann := f.Ann.(*EscapeFieldAnnotationKey)
@@ -936,6 +1236,16 @@ type UseAsNonErrorRetDependentOnErrorRetNilability struct {
 
 	IsNamedReturn bool
 	RetStmt       *ast.ReturnStmt
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (u *UseAsNonErrorRetDependentOnErrorRetNilability) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*UseAsNonErrorRetDependentOnErrorRetNilability); ok {
+		return u.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+			u.IsNamedReturn == other.IsNamedReturn &&
+			u.RetStmt == other.RetStmt
+	}
+	return false
 }
 
 // Prestring returns this UseAsNonErrorRetDependentOnErrorRetNilability as a Prestring
@@ -983,6 +1293,16 @@ type UseAsErrorRetWithNilabilityUnknown struct {
 
 	IsNamedReturn bool
 	RetStmt       *ast.ReturnStmt
+}
+
+// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+func (u *UseAsErrorRetWithNilabilityUnknown) Equals(other ConsumingAnnotationTrigger) bool {
+	if other, ok := other.(*UseAsErrorRetWithNilabilityUnknown); ok {
+		return u.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+			u.IsNamedReturn == other.IsNamedReturn &&
+			u.RetStmt == other.RetStmt
+	}
+	return false
 }
 
 // Prestring returns this UseAsErrorRetWithNilabilityUnknown as a Prestring
@@ -1076,7 +1396,7 @@ type ConsumeTrigger struct {
 
 // Eq compares two ConsumeTrigger pointers for equality
 func (c *ConsumeTrigger) Eq(c2 *ConsumeTrigger) bool {
-	return reflect.DeepEqual(c.Annotation, c2.Annotation) &&
+	return c.Annotation.Equals(c2.Annotation) &&
 		c.Expr == c2.Expr &&
 		c.Guards.Eq(c2.Guards) &&
 		c.GuardMatched == c2.GuardMatched
@@ -1100,7 +1420,7 @@ func MergeConsumeTriggerSlices(left, right []*ConsumeTrigger) []*ConsumeTrigger 
 
 	addToOut := func(trigger *ConsumeTrigger) {
 		for i, outTrigger := range out {
-			if reflect.DeepEqual(outTrigger.Annotation, trigger.Annotation) &&
+			if outTrigger.Annotation.Equals(trigger.Annotation) &&
 				outTrigger.Expr == trigger.Expr {
 				// intersect guard sets - if a guard isn't present in both branches it can't
 				// be considered present before the branch
