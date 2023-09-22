@@ -883,7 +883,7 @@ func BackpropAcrossFunc(ctx context.Context, pass *analysis.Pass, decl *ast.Func
 
 		if nextRootAssertionNode == nil && currRootAssertionNode == nil ||
 			(nextRootAssertionNode != nil && currRootAssertionNode != nil &&
-				annotation.FullTriggerSlicesEq(pass, nextRootAssertionNode.triggers, currRootAssertionNode.triggers)) {
+				annotation.FullTriggerSlicesEq(nextRootAssertionNode.triggers, currRootAssertionNode.triggers)) {
 			stableRoundCount++
 		} else {
 			stableRoundCount = 0

@@ -67,7 +67,7 @@ func (r *RootAssertionNode) MinimalString() string {
 
 // AddNewTriggers adds the given new triggers to the existing set of triggers of this node
 func (r *RootAssertionNode) AddNewTriggers(newTrigger ...annotation.FullTrigger) {
-	r.triggers = annotation.MergeFullTriggers(r.Pass(), r.triggers, newTrigger...)
+	r.triggers = annotation.MergeFullTriggers(r.triggers, newTrigger...)
 }
 
 // FuncDecl returns the underlying function declaration of this node
@@ -1038,7 +1038,7 @@ func (r *RootAssertionNode) eqNodes(left, right AssertionNode) bool {
 	}
 	if lroot, ok := left.(*RootAssertionNode); ok {
 		if rroot, ok := right.(*RootAssertionNode); ok {
-			if !annotation.FullTriggerSlicesEq(r.Pass(), lroot.triggers, rroot.triggers) {
+			if !annotation.FullTriggerSlicesEq(lroot.triggers, rroot.triggers) {
 				return false
 			}
 		} else {
@@ -1255,7 +1255,7 @@ func (r *RootAssertionNode) mergeInto(left, right AssertionNode) {
 
 	if left, lok := left.(*RootAssertionNode); lok {
 		right := right.(*RootAssertionNode)
-		left.triggers = annotation.MergeFullTriggers(r.Pass(), left.triggers, right.triggers...)
+		left.triggers = annotation.MergeFullTriggers(left.triggers, right.triggers...)
 	}
 
 	// merge in children

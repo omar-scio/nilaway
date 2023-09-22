@@ -125,7 +125,7 @@ func (t *FullTrigger) Prestrings(pass *analysis.Pass) (Prestring, Prestring) {
 // RootAssertionNode.ProcessEntry can use checkGuardOnFullTrigger to rewrite the producer based on
 // its value. So if you accept that the producer is needed for equality, you accept that
 // Consumer.GuardMatched is needed for equality.
-func FullTriggerSlicesEq(pass *analysis.Pass, left, right []FullTrigger) bool {
+func FullTriggerSlicesEq(left, right []FullTrigger) bool {
 	if len(left) != len(right) {
 		return false
 	}
@@ -156,7 +156,7 @@ func FullTriggerSlicesEq(pass *analysis.Pass, left, right []FullTrigger) bool {
 // Consumer.GuardMatched into a single trigger with Consume.GuardMatched = false. In all other cases - such as
 // checking fixed point in propagation, the function FullTriggersEq
 // that does observe GuardMatched should be used instead of this function.
-func MergeFullTriggers(pass *analysis.Pass, left []FullTrigger, right ...FullTrigger) []FullTrigger {
+func MergeFullTriggers(left []FullTrigger, right ...FullTrigger) []FullTrigger {
 	var out []FullTrigger
 	updateLeftGuard := make(map[int]bool)
 	skipRight := make(map[int]bool)

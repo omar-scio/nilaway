@@ -181,7 +181,7 @@ func (*ProduceTriggerTautology) Prestring() Prestring {
 	return ProduceTriggerTautologyPrestring{}
 }
 
-// ProduceTriggerNeverPrestring is a Prestring storing the needed information to compactly encode a ProduceTriggerNever
+// ProduceTriggerTautologyPrestring is a Prestring storing the needed information to compactly encode a ProduceTriggerTautology
 type ProduceTriggerTautologyPrestring struct{}
 
 func (ProduceTriggerTautologyPrestring) String() string {
@@ -685,9 +685,9 @@ type ParamFldRead struct {
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (p *ParamFldRead) Equals(other ProducingAnnotationTrigger) bool {
+func (f *ParamFldRead) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*ParamFldRead); ok {
-		return p.TriggerIfNilable.Equals(other.TriggerIfNilable)
+		return f.TriggerIfNilable.Equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -945,9 +945,9 @@ type MapRead struct {
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (g *MapRead) Equals(other ProducingAnnotationTrigger) bool {
+func (m *MapRead) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*MapRead); ok {
-		return g.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable) && g.NeedsGuard == other.NeedsGuard
+		return m.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable) && m.NeedsGuard == other.NeedsGuard
 	}
 	return false
 }
