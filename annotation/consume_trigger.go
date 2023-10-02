@@ -53,6 +53,9 @@ type ConsumingAnnotationTrigger interface {
 
 	// equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
 	equals(ConsumingAnnotationTrigger) bool
+
+	// NeedsGuarding returns true if the trigger needs to be guarded by a nil check or an ok form.
+	NeedsGuarding() bool
 }
 
 // customPos has the below default implementations, in which case ConsumeTrigger.Pos() will return a default value.
@@ -60,6 +63,15 @@ type ConsumingAnnotationTrigger interface {
 func (t *TriggerIfNonNil) customPos() (token.Pos, bool)         { return 0, false }
 func (t *TriggerIfDeepNonNil) customPos() (token.Pos, bool)     { return 0, false }
 func (t *ConsumeTriggerTautology) customPos() (token.Pos, bool) { return 0, false }
+
+// NeedsGuarding default implementation for TriggerIfNonNil. To return non-default value, this method should be overridden.
+func (t TriggerIfNonNil) NeedsGuarding() bool { return true }
+
+// NeedsGuarding default implementation for TriggerIfDeepNonNil. To return non-default value, this method should be overridden.
+func (t TriggerIfDeepNonNil) NeedsGuarding() bool { return true }
+
+// NeedsGuarding default implementation for ConsumeTriggerTautology. To return non-default value, this method should be overridden.
+func (t ConsumeTriggerTautology) NeedsGuarding() bool { return true }
 
 // Prestring is an interface used to encode objects that have compact on-the-wire encodings
 // (via gob) but can still be expanded into verbose string representations on demand using
