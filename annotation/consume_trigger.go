@@ -62,6 +62,15 @@ type ConsumingAnnotationTrigger interface {
 	SetNeedsGuard(bool)
 }
 
+// NeedsGuarding default implementation for TriggerIfNonNil. To return non-default value, this method should be overridden.
+func (t TriggerIfNonNil) NeedsGuarding() bool { return true }
+
+// NeedsGuarding default implementation for TriggerIfDeepNonNil. To return non-default value, this method should be overridden.
+func (t TriggerIfDeepNonNil) NeedsGuarding() bool { return true }
+
+// NeedsGuarding default implementation for ConsumeTriggerTautology. To return non-default value, this method should be overridden.
+func (t ConsumeTriggerTautology) NeedsGuarding() bool { return true }
+
 // Prestring is an interface used to encode objects that have compact on-the-wire encodings
 // (via gob) but can still be expanded into verbose string representations on demand using
 // type information. These are key for compact encoding of InferredAnnotationMaps
