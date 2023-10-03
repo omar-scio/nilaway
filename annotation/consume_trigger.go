@@ -51,8 +51,8 @@ type ConsumingAnnotationTrigger interface {
 
 	customPos() (token.Pos, bool)
 
-	// Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-	Equals(ConsumingAnnotationTrigger) bool
+	// equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
+	equals(ConsumingAnnotationTrigger) bool
 }
 
 // customPos has the below default implementations, in which case ConsumeTrigger.Pos() will return a default value.
@@ -86,7 +86,7 @@ func (t *TriggerIfNonNil) CheckConsume(annMap Map) bool {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (t *TriggerIfNonNil) Equals(other ConsumingAnnotationTrigger) bool {
+func (t *TriggerIfNonNil) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*TriggerIfNonNil); ok {
 		return t.Ann.Equals(other.Ann)
 	}
@@ -123,7 +123,7 @@ func (t *TriggerIfDeepNonNil) CheckConsume(annMap Map) bool {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (t *TriggerIfDeepNonNil) Equals(other ConsumingAnnotationTrigger) bool {
+func (t *TriggerIfDeepNonNil) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*TriggerIfDeepNonNil); ok {
 		return t.Ann.Equals(other.Ann)
 	}
@@ -157,7 +157,7 @@ func (*ConsumeTriggerTautology) CheckConsume(Map) bool {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (*ConsumeTriggerTautology) Equals(other ConsumingAnnotationTrigger) bool {
+func (*ConsumeTriggerTautology) equals(other ConsumingAnnotationTrigger) bool {
 	_, ok := other.(*ConsumeTriggerTautology)
 	return ok
 }
@@ -180,9 +180,9 @@ type PtrLoad struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (p *PtrLoad) Equals(other ConsumingAnnotationTrigger) bool {
+func (p *PtrLoad) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*PtrLoad); ok {
-		return p.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+		return p.ConsumeTriggerTautology.equals(other.ConsumeTriggerTautology)
 	}
 	return false
 }
@@ -207,9 +207,9 @@ type MapAccess struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (i *MapAccess) Equals(other ConsumingAnnotationTrigger) bool {
+func (i *MapAccess) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*PtrLoad); ok {
-		return i.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+		return i.ConsumeTriggerTautology.equals(other.ConsumeTriggerTautology)
 	}
 	return false
 }
@@ -233,9 +233,9 @@ type MapWrittenTo struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (m *MapWrittenTo) Equals(other ConsumingAnnotationTrigger) bool {
+func (m *MapWrittenTo) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*MapWrittenTo); ok {
-		return m.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+		return m.ConsumeTriggerTautology.equals(other.ConsumeTriggerTautology)
 	}
 	return false
 }
@@ -258,9 +258,9 @@ type SliceAccess struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (s *SliceAccess) Equals(other ConsumingAnnotationTrigger) bool {
+func (s *SliceAccess) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*SliceAccess); ok {
-		return s.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+		return s.ConsumeTriggerTautology.equals(other.ConsumeTriggerTautology)
 	}
 	return false
 }
@@ -285,9 +285,9 @@ type FldAccess struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (f *FldAccess) Equals(other ConsumingAnnotationTrigger) bool {
+func (f *FldAccess) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*FldAccess); ok {
-		return f.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology) && f.Sel == other.Sel
+		return f.ConsumeTriggerTautology.equals(other.ConsumeTriggerTautology) && f.Sel == other.Sel
 	}
 	return false
 }
@@ -332,9 +332,9 @@ type UseAsErrorResult struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (u *UseAsErrorResult) Equals(other ConsumingAnnotationTrigger) bool {
+func (u *UseAsErrorResult) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*UseAsErrorResult); ok {
-		return u.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+		return u.TriggerIfNonNil.equals(other.TriggerIfNonNil) &&
 			u.RetStmt == other.RetStmt &&
 			u.IsNamedReturn == other.IsNamedReturn
 	}
@@ -381,9 +381,9 @@ type FldAssign struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (f *FldAssign) Equals(other ConsumingAnnotationTrigger) bool {
+func (f *FldAssign) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*FldAssign); ok {
-		return f.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+		return f.TriggerIfNonNil.equals(other.TriggerIfNonNil)
 	}
 	return false
 }
@@ -413,9 +413,9 @@ type ArgFldPass struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (f *ArgFldPass) Equals(other ConsumingAnnotationTrigger) bool {
+func (f *ArgFldPass) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*ArgFldPass); ok {
-		return f.TriggerIfNonNil.Equals(other.TriggerIfNonNil) && f.IsPassed == other.IsPassed
+		return f.TriggerIfNonNil.equals(other.TriggerIfNonNil) && f.IsPassed == other.IsPassed
 	}
 	return false
 }
@@ -464,9 +464,9 @@ type GlobalVarAssign struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (g *GlobalVarAssign) Equals(other ConsumingAnnotationTrigger) bool {
+func (g *GlobalVarAssign) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*GlobalVarAssign); ok {
-		return g.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+		return g.TriggerIfNonNil.equals(other.TriggerIfNonNil)
 	}
 	return false
 }
@@ -499,9 +499,9 @@ type ArgPass struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (a *ArgPass) Equals(other ConsumingAnnotationTrigger) bool {
+func (a *ArgPass) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*ArgPass); ok {
-		return a.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+		return a.TriggerIfNonNil.equals(other.TriggerIfNonNil)
 	}
 	return false
 }
@@ -552,9 +552,9 @@ type RecvPass struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (a *RecvPass) Equals(other ConsumingAnnotationTrigger) bool {
+func (a *RecvPass) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*RecvPass); ok {
-		return a.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+		return a.TriggerIfNonNil.equals(other.TriggerIfNonNil)
 	}
 	return false
 }
@@ -583,9 +583,9 @@ type InterfaceResultFromImplementation struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (i *InterfaceResultFromImplementation) Equals(other ConsumingAnnotationTrigger) bool {
+func (i *InterfaceResultFromImplementation) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*InterfaceResultFromImplementation); ok {
-		return i.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+		return i.TriggerIfNonNil.equals(other.TriggerIfNonNil) &&
 			i.AffiliationPair.InterfaceMethod == other.AffiliationPair.InterfaceMethod &&
 			i.AffiliationPair.ImplementingMethod == other.AffiliationPair.ImplementingMethod
 	}
@@ -621,9 +621,9 @@ type MethodParamFromInterface struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (m *MethodParamFromInterface) Equals(other ConsumingAnnotationTrigger) bool {
+func (m *MethodParamFromInterface) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*MethodParamFromInterface); ok {
-		return m.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+		return m.TriggerIfNonNil.equals(other.TriggerIfNonNil) &&
 			m.AffiliationPair.InterfaceMethod == other.AffiliationPair.InterfaceMethod &&
 			m.AffiliationPair.ImplementingMethod == other.AffiliationPair.ImplementingMethod
 	}
@@ -682,9 +682,9 @@ type UseAsReturn struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (u *UseAsReturn) Equals(other ConsumingAnnotationTrigger) bool {
+func (u *UseAsReturn) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*UseAsReturn); ok {
-		return u.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+		return u.TriggerIfNonNil.equals(other.TriggerIfNonNil) &&
 			u.IsNamedReturn == other.IsNamedReturn &&
 			u.RetStmt == other.RetStmt
 	}
@@ -756,9 +756,9 @@ type UseAsFldOfReturn struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (u *UseAsFldOfReturn) Equals(other ConsumingAnnotationTrigger) bool {
+func (u *UseAsFldOfReturn) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*UseAsFldOfReturn); ok {
-		return u.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+		return u.TriggerIfNonNil.equals(other.TriggerIfNonNil)
 	}
 	return false
 }
@@ -826,9 +826,9 @@ type SliceAssign struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (f *SliceAssign) Equals(other ConsumingAnnotationTrigger) bool {
+func (f *SliceAssign) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*SliceAssign); ok {
-		return f.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+		return f.TriggerIfDeepNonNil.equals(other.TriggerIfDeepNonNil)
 	}
 	return false
 }
@@ -856,9 +856,9 @@ type ArrayAssign struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (a *ArrayAssign) Equals(other ConsumingAnnotationTrigger) bool {
+func (a *ArrayAssign) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*ArrayAssign); ok {
-		return a.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+		return a.TriggerIfDeepNonNil.equals(other.TriggerIfDeepNonNil)
 	}
 	return false
 }
@@ -886,9 +886,9 @@ type PtrAssign struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (f *PtrAssign) Equals(other ConsumingAnnotationTrigger) bool {
+func (f *PtrAssign) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*PtrAssign); ok {
-		return f.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+		return f.TriggerIfDeepNonNil.equals(other.TriggerIfDeepNonNil)
 	}
 	return false
 }
@@ -916,9 +916,9 @@ type MapAssign struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (f *MapAssign) Equals(other ConsumingAnnotationTrigger) bool {
+func (f *MapAssign) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*MapAssign); ok {
-		return f.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+		return f.TriggerIfDeepNonNil.equals(other.TriggerIfDeepNonNil)
 	}
 	return false
 }
@@ -947,9 +947,9 @@ type DeepAssignPrimitive struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (d *DeepAssignPrimitive) Equals(other ConsumingAnnotationTrigger) bool {
+func (d *DeepAssignPrimitive) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*DeepAssignPrimitive); ok {
-		return d.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+		return d.ConsumeTriggerTautology.equals(other.ConsumeTriggerTautology)
 	}
 	return false
 }
@@ -972,9 +972,9 @@ type ParamAssignDeep struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (p *ParamAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+func (p *ParamAssignDeep) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*ParamAssignDeep); ok {
-		return p.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+		return p.TriggerIfDeepNonNil.equals(other.TriggerIfDeepNonNil)
 	}
 	return false
 }
@@ -999,9 +999,9 @@ type FuncRetAssignDeep struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (f *FuncRetAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+func (f *FuncRetAssignDeep) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*FuncRetAssignDeep); ok {
-		return f.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+		return f.TriggerIfDeepNonNil.equals(other.TriggerIfDeepNonNil)
 	}
 	return false
 }
@@ -1032,9 +1032,9 @@ type VariadicParamAssignDeep struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (v *VariadicParamAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+func (v *VariadicParamAssignDeep) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*VariadicParamAssignDeep); ok {
-		return v.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+		return v.TriggerIfNonNil.equals(other.TriggerIfNonNil)
 	}
 	return false
 }
@@ -1062,9 +1062,9 @@ type FieldAssignDeep struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (f *FieldAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+func (f *FieldAssignDeep) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*FieldAssignDeep); ok {
-		return f.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+		return f.TriggerIfDeepNonNil.equals(other.TriggerIfDeepNonNil)
 	}
 	return false
 }
@@ -1090,9 +1090,9 @@ type GlobalVarAssignDeep struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (g *GlobalVarAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+func (g *GlobalVarAssignDeep) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*GlobalVarAssignDeep); ok {
-		return g.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+		return g.TriggerIfDeepNonNil.equals(other.TriggerIfDeepNonNil)
 	}
 	return false
 }
@@ -1118,9 +1118,9 @@ type ChanAccess struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (c *ChanAccess) Equals(other ConsumingAnnotationTrigger) bool {
+func (c *ChanAccess) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*ChanAccess); ok {
-		return c.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology)
+		return c.ConsumeTriggerTautology.equals(other.ConsumeTriggerTautology)
 	}
 	return false
 }
@@ -1144,9 +1144,9 @@ type LocalVarAssignDeep struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (l *LocalVarAssignDeep) Equals(other ConsumingAnnotationTrigger) bool {
+func (l *LocalVarAssignDeep) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*LocalVarAssignDeep); ok {
-		return l.ConsumeTriggerTautology.Equals(other.ConsumeTriggerTautology) && l.LocalVar == other.LocalVar
+		return l.ConsumeTriggerTautology.equals(other.ConsumeTriggerTautology) && l.LocalVar == other.LocalVar
 	}
 	return false
 }
@@ -1171,9 +1171,9 @@ type ChanSend struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (c *ChanSend) Equals(other ConsumingAnnotationTrigger) bool {
+func (c *ChanSend) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*ChanSend); ok {
-		return c.TriggerIfDeepNonNil.Equals(other.TriggerIfDeepNonNil)
+		return c.TriggerIfDeepNonNil.equals(other.TriggerIfDeepNonNil)
 	}
 	return false
 }
@@ -1206,9 +1206,9 @@ type FldEscape struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (f *FldEscape) Equals(other ConsumingAnnotationTrigger) bool {
+func (f *FldEscape) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*FldEscape); ok {
-		return f.TriggerIfNonNil.Equals(other.TriggerIfNonNil)
+		return f.TriggerIfNonNil.equals(other.TriggerIfNonNil)
 	}
 	return false
 }
@@ -1239,9 +1239,9 @@ type UseAsNonErrorRetDependentOnErrorRetNilability struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (u *UseAsNonErrorRetDependentOnErrorRetNilability) Equals(other ConsumingAnnotationTrigger) bool {
+func (u *UseAsNonErrorRetDependentOnErrorRetNilability) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*UseAsNonErrorRetDependentOnErrorRetNilability); ok {
-		return u.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+		return u.TriggerIfNonNil.equals(other.TriggerIfNonNil) &&
 			u.IsNamedReturn == other.IsNamedReturn &&
 			u.RetStmt == other.RetStmt
 	}
@@ -1296,9 +1296,9 @@ type UseAsErrorRetWithNilabilityUnknown struct {
 }
 
 // Equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
-func (u *UseAsErrorRetWithNilabilityUnknown) Equals(other ConsumingAnnotationTrigger) bool {
+func (u *UseAsErrorRetWithNilabilityUnknown) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*UseAsErrorRetWithNilabilityUnknown); ok {
-		return u.TriggerIfNonNil.Equals(other.TriggerIfNonNil) &&
+		return u.TriggerIfNonNil.equals(other.TriggerIfNonNil) &&
 			u.IsNamedReturn == other.IsNamedReturn &&
 			u.RetStmt == other.RetStmt
 	}
@@ -1395,8 +1395,8 @@ type ConsumeTrigger struct {
 }
 
 // Eq compares two ConsumeTrigger pointers for equality
-func (c *ConsumeTrigger) Eq(c2 *ConsumeTrigger) bool {
-	return c.Annotation.Equals(c2.Annotation) &&
+func (c *ConsumeTrigger) equals(c2 *ConsumeTrigger) bool {
+	return c.Annotation.equals(c2.Annotation) &&
 		c.Expr == c2.Expr &&
 		c.Guards.Eq(c2.Guards) &&
 		c.GuardMatched == c2.GuardMatched
@@ -1420,7 +1420,7 @@ func MergeConsumeTriggerSlices(left, right []*ConsumeTrigger) []*ConsumeTrigger 
 
 	addToOut := func(trigger *ConsumeTrigger) {
 		for i, outTrigger := range out {
-			if outTrigger.Annotation.Equals(trigger.Annotation) &&
+			if outTrigger.Annotation.equals(trigger.Annotation) &&
 				outTrigger.Expr == trigger.Expr {
 				// intersect guard sets - if a guard isn't present in both branches it can't
 				// be considered present before the branch
@@ -1470,7 +1470,7 @@ func ConsumeTriggerSlicesEq(left, right []*ConsumeTrigger) bool {
 lsearch:
 	for _, l := range left {
 		for _, r := range right {
-			if l.Eq(r) {
+			if l.equals(r) {
 				continue lsearch
 			}
 		}

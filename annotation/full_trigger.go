@@ -78,16 +78,16 @@ func (t *FullTrigger) truncatedProducerPos(pass *analysis.Pass) token.Position {
 
 // Equals returns true if the two passed FullTriggers are equal, and false otherwise.
 func (t *FullTrigger) Equals(other FullTrigger) bool {
-	return t.Producer.Annotation.Equals(other.Producer.Annotation) &&
-		t.Consumer.Annotation.Equals(other.Consumer.Annotation) &&
+	return t.Producer.Annotation.equals(other.Producer.Annotation) &&
+		t.Consumer.Annotation.equals(other.Consumer.Annotation) &&
 		t.Consumer.Expr == other.Consumer.Expr &&
 		t.Consumer.GuardMatched == other.Consumer.GuardMatched
 }
 
 // EqualsModuloGuardMatched returns true if the two passed FullTriggers (modulo the GuardMatched field) are equal, and false otherwise.
 func (t *FullTrigger) EqualsModuloGuardMatched(other FullTrigger) bool {
-	return t.Producer.Annotation.Equals(other.Producer.Annotation) &&
-		t.Consumer.Annotation.Equals(other.Consumer.Annotation) &&
+	return t.Producer.Annotation.equals(other.Producer.Annotation) &&
+		t.Consumer.Annotation.equals(other.Consumer.Annotation) &&
 		t.Consumer.Expr == other.Consumer.Expr
 }
 

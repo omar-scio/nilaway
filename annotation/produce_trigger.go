@@ -61,8 +61,8 @@ type ProducingAnnotationTrigger interface {
 	// trigger always or never fires, the site is nil.
 	UnderlyingSite() Key
 
-	// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-	Equals(ProducingAnnotationTrigger) bool
+	// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+	equals(ProducingAnnotationTrigger) bool
 }
 
 // TriggerIfNilable is a general trigger indicating that the bad case occurs when a certain Annotation
@@ -108,8 +108,8 @@ func (t *TriggerIfNilable) Kind() TriggerKind { return Conditional }
 // UnderlyingSite returns the underlying site this trigger's nilability depends on.
 func (t *TriggerIfNilable) UnderlyingSite() Key { return t.Ann }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (t *TriggerIfNilable) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (t *TriggerIfNilable) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*TriggerIfNilable); ok {
 		return t.Ann.Equals(other.Ann) && t.NeedsGuard == other.NeedsGuard
 	}
@@ -156,8 +156,8 @@ func (t *TriggerIfDeepNilable) Kind() TriggerKind { return DeepConditional }
 // UnderlyingSite returns the underlying site this trigger's nilability depends on.
 func (t *TriggerIfDeepNilable) UnderlyingSite() Key { return t.Ann }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (t *TriggerIfDeepNilable) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (t *TriggerIfDeepNilable) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*TriggerIfDeepNilable); ok {
 		return t.Ann.Equals(other.Ann) && t.NeedsGuard == other.NeedsGuard
 	}
@@ -200,8 +200,8 @@ func (*ProduceTriggerTautology) Kind() TriggerKind { return Always }
 // UnderlyingSite always returns nil.
 func (*ProduceTriggerTautology) UnderlyingSite() Key { return nil }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (p *ProduceTriggerTautology) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (p *ProduceTriggerTautology) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*ProduceTriggerTautology); ok {
 		return p.NeedsGuard == other.NeedsGuard
 	}
@@ -242,8 +242,8 @@ func (*ProduceTriggerNever) Kind() TriggerKind { return Never }
 // UnderlyingSite always returns nil.
 func (*ProduceTriggerNever) UnderlyingSite() Key { return nil }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (p *ProduceTriggerNever) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (p *ProduceTriggerNever) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*ProduceTriggerNever); ok {
 		return p.NeedsGuard == other.NeedsGuard
 	}
@@ -260,10 +260,10 @@ type ExprOkCheck struct {
 	*ProduceTriggerNever
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (e *ExprOkCheck) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (e *ExprOkCheck) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*ExprOkCheck); ok {
-		return e.ProduceTriggerNever.Equals(other.ProduceTriggerNever)
+		return e.ProduceTriggerNever.equals(other.ProduceTriggerNever)
 	}
 	return false
 }
@@ -274,10 +274,10 @@ type RangeIndexAssignment struct {
 	*ProduceTriggerNever
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (r *RangeIndexAssignment) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (r *RangeIndexAssignment) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*RangeIndexAssignment); ok {
-		return r.ProduceTriggerNever.Equals(other.ProduceTriggerNever)
+		return r.ProduceTriggerNever.equals(other.ProduceTriggerNever)
 	}
 	return false
 }
@@ -287,10 +287,10 @@ type PositiveNilCheck struct {
 	*ProduceTriggerTautology
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (p *PositiveNilCheck) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (p *PositiveNilCheck) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*PositiveNilCheck); ok {
-		return p.ProduceTriggerTautology.Equals(other.ProduceTriggerTautology)
+		return p.ProduceTriggerTautology.equals(other.ProduceTriggerTautology)
 	}
 	return false
 }
@@ -312,10 +312,10 @@ type NegativeNilCheck struct {
 	*ProduceTriggerNever
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (n *NegativeNilCheck) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (n *NegativeNilCheck) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*NegativeNilCheck); ok {
-		return n.ProduceTriggerNever.Equals(other.ProduceTriggerNever)
+		return n.ProduceTriggerNever.equals(other.ProduceTriggerNever)
 	}
 	return false
 }
@@ -339,10 +339,10 @@ type OkReadReflCheck struct {
 	*ProduceTriggerNever
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (o *OkReadReflCheck) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (o *OkReadReflCheck) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*OkReadReflCheck); ok {
-		return o.ProduceTriggerNever.Equals(other.ProduceTriggerNever)
+		return o.ProduceTriggerNever.equals(other.ProduceTriggerNever)
 	}
 	return false
 }
@@ -352,10 +352,10 @@ type RangeOver struct {
 	*ProduceTriggerNever
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (r *RangeOver) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (r *RangeOver) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*RangeOver); ok {
-		return r.ProduceTriggerNever.Equals(other.ProduceTriggerNever)
+		return r.ProduceTriggerNever.equals(other.ProduceTriggerNever)
 	}
 	return false
 }
@@ -365,10 +365,10 @@ type ConstNil struct {
 	*ProduceTriggerTautology
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (c *ConstNil) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (c *ConstNil) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*ConstNil); ok {
-		return c.ProduceTriggerTautology.Equals(other.ProduceTriggerTautology)
+		return c.ProduceTriggerTautology.equals(other.ProduceTriggerTautology)
 	}
 	return false
 }
@@ -390,10 +390,10 @@ type UnassignedFld struct {
 	*ProduceTriggerTautology
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (u *UnassignedFld) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (u *UnassignedFld) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*UnassignedFld); ok {
-		return u.ProduceTriggerTautology.Equals(other.ProduceTriggerTautology)
+		return u.ProduceTriggerTautology.equals(other.ProduceTriggerTautology)
 	}
 	return false
 }
@@ -416,10 +416,10 @@ type NoVarAssign struct {
 	VarObj *types.Var
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (n *NoVarAssign) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (n *NoVarAssign) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*NoVarAssign); ok {
-		return n.ProduceTriggerTautology.Equals(other.ProduceTriggerTautology) && n.VarObj == other.VarObj
+		return n.ProduceTriggerTautology.equals(other.ProduceTriggerTautology) && n.VarObj == other.VarObj
 	}
 	return false
 }
@@ -445,10 +445,10 @@ type BlankVarReturn struct {
 	*ProduceTriggerTautology
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (b *BlankVarReturn) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (b *BlankVarReturn) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*BlankVarReturn); ok {
-		return b.ProduceTriggerTautology.Equals(other.ProduceTriggerTautology)
+		return b.ProduceTriggerTautology.equals(other.ProduceTriggerTautology)
 	}
 	return false
 }
@@ -487,10 +487,10 @@ type FuncParam struct {
 	*TriggerIfNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (f *FuncParam) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (f *FuncParam) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FuncParam); ok {
-		return f.TriggerIfNilable.Equals(other.TriggerIfNilable)
+		return f.TriggerIfNilable.equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -531,10 +531,10 @@ type MethodRecv struct {
 	VarDecl *types.Var
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (m *MethodRecv) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (m *MethodRecv) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*MethodRecv); ok {
-		return m.TriggerIfNilable.Equals(other.TriggerIfNilable) && m.VarDecl == other.VarDecl
+		return m.TriggerIfNilable.equals(other.TriggerIfNilable) && m.VarDecl == other.VarDecl
 	}
 	return false
 }
@@ -559,10 +559,10 @@ type MethodRecvDeep struct {
 	VarDecl *types.Var
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (m *MethodRecvDeep) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (m *MethodRecvDeep) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*MethodRecvDeep); ok {
-		return m.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable) && m.VarDecl == other.VarDecl
+		return m.TriggerIfDeepNilable.equals(other.TriggerIfDeepNilable) && m.VarDecl == other.VarDecl
 	}
 	return false
 }
@@ -588,10 +588,10 @@ type VariadicFuncParam struct {
 	VarDecl *types.Var
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (v *VariadicFuncParam) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (v *VariadicFuncParam) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*VariadicFuncParam); ok {
-		return v.ProduceTriggerTautology.Equals(other.ProduceTriggerTautology) && v.VarDecl == other.VarDecl
+		return v.ProduceTriggerTautology.equals(other.ProduceTriggerTautology) && v.VarDecl == other.VarDecl
 	}
 	return false
 }
@@ -615,10 +615,10 @@ type TrustedFuncNilable struct {
 	*ProduceTriggerTautology
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (t *TrustedFuncNilable) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (t *TrustedFuncNilable) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*TrustedFuncNilable); ok {
-		return t.ProduceTriggerTautology.Equals(other.ProduceTriggerTautology)
+		return t.ProduceTriggerTautology.equals(other.ProduceTriggerTautology)
 	}
 	return false
 }
@@ -640,10 +640,10 @@ type TrustedFuncNonnil struct {
 	*ProduceTriggerNever
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (t *TrustedFuncNonnil) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (t *TrustedFuncNonnil) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*TrustedFuncNonnil); ok {
-		return t.ProduceTriggerNever.Equals(other.ProduceTriggerNever)
+		return t.ProduceTriggerNever.equals(other.ProduceTriggerNever)
 	}
 	return false
 }
@@ -665,10 +665,10 @@ type FldRead struct {
 	*TriggerIfNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (f *FldRead) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (f *FldRead) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FldRead); ok {
-		return f.TriggerIfNilable.Equals(other.TriggerIfNilable)
+		return f.TriggerIfNilable.equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -696,10 +696,10 @@ type ParamFldRead struct {
 	*TriggerIfNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (f *ParamFldRead) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (f *ParamFldRead) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*ParamFldRead); ok {
-		return f.TriggerIfNilable.Equals(other.TriggerIfNilable)
+		return f.TriggerIfNilable.equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -726,10 +726,10 @@ type FldReturn struct {
 	*TriggerIfNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (f *FldReturn) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (f *FldReturn) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FldReturn); ok {
-		return f.TriggerIfNilable.Equals(other.TriggerIfNilable)
+		return f.TriggerIfNilable.equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -765,10 +765,10 @@ type FuncReturn struct {
 	*TriggerIfNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (f *FuncReturn) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (f *FuncReturn) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FuncReturn); ok {
-		return f.TriggerIfNilable.Equals(other.TriggerIfNilable)
+		return f.TriggerIfNilable.equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -808,10 +808,10 @@ type MethodReturn struct {
 	*TriggerIfNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (m *MethodReturn) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (m *MethodReturn) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*MethodReturn); ok {
-		return m.TriggerIfNilable.Equals(other.TriggerIfNilable)
+		return m.TriggerIfNilable.equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -838,10 +838,10 @@ type MethodResultReachesInterface struct {
 	*AffiliationPair
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (m *MethodResultReachesInterface) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (m *MethodResultReachesInterface) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*MethodResultReachesInterface); ok {
-		return m.TriggerIfNilable.Equals(other.TriggerIfNilable) &&
+		return m.TriggerIfNilable.equals(other.TriggerIfNilable) &&
 			m.AffiliationPair.InterfaceMethod == other.AffiliationPair.InterfaceMethod &&
 			m.AffiliationPair.ImplementingMethod == other.AffiliationPair.ImplementingMethod
 	}
@@ -875,10 +875,10 @@ type InterfaceParamReachesImplementation struct {
 	*AffiliationPair
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (i *InterfaceParamReachesImplementation) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (i *InterfaceParamReachesImplementation) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*InterfaceParamReachesImplementation); ok {
-		return i.TriggerIfNilable.Equals(other.TriggerIfNilable) &&
+		return i.TriggerIfNilable.equals(other.TriggerIfNilable) &&
 			i.AffiliationPair.InterfaceMethod == other.AffiliationPair.InterfaceMethod &&
 			i.AffiliationPair.ImplementingMethod == other.AffiliationPair.ImplementingMethod
 	}
@@ -911,10 +911,10 @@ type GlobalVarRead struct {
 	*TriggerIfNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (g *GlobalVarRead) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (g *GlobalVarRead) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*GlobalVarRead); ok {
-		return g.TriggerIfNilable.Equals(other.TriggerIfNilable)
+		return g.TriggerIfNilable.equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -942,10 +942,10 @@ type MapRead struct {
 	*TriggerIfDeepNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (m *MapRead) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (m *MapRead) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*MapRead); ok {
-		return m.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
+		return m.TriggerIfDeepNilable.equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -970,10 +970,10 @@ type ArrayRead struct {
 	*TriggerIfDeepNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (a *ArrayRead) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (a *ArrayRead) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*ArrayRead); ok {
-		return a.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
+		return a.TriggerIfDeepNilable.equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -998,10 +998,10 @@ type SliceRead struct {
 	*TriggerIfDeepNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (s *SliceRead) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (s *SliceRead) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*SliceRead); ok {
-		return s.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
+		return s.TriggerIfDeepNilable.equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1032,10 +1032,10 @@ func (p *PtrRead) Prestring() Prestring {
 	return PtrReadPrestring{key.TypeDecl.Name()}
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (p *PtrRead) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (p *PtrRead) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*PtrRead); ok {
-		return p.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
+		return p.TriggerIfDeepNilable.equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1054,10 +1054,10 @@ type ChanRecv struct {
 	*TriggerIfDeepNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (c *ChanRecv) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (c *ChanRecv) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*ChanRecv); ok {
-		return c.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
+		return c.TriggerIfDeepNilable.equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1082,10 +1082,10 @@ type FuncParamDeep struct {
 	*TriggerIfDeepNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (f *FuncParamDeep) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (f *FuncParamDeep) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FuncParamDeep); ok {
-		return f.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
+		return f.TriggerIfDeepNilable.equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1111,10 +1111,10 @@ type VariadicFuncParamDeep struct {
 	*TriggerIfNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (v *VariadicFuncParamDeep) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (v *VariadicFuncParamDeep) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*VariadicFuncParamDeep); ok {
-		return v.TriggerIfNilable.Equals(other.TriggerIfNilable)
+		return v.TriggerIfNilable.equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -1139,10 +1139,10 @@ type FuncReturnDeep struct {
 	*TriggerIfDeepNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (f *FuncReturnDeep) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (f *FuncReturnDeep) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FuncReturnDeep); ok {
-		return f.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
+		return f.TriggerIfDeepNilable.equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1169,10 +1169,10 @@ type FldReadDeep struct {
 	*TriggerIfDeepNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (f *FldReadDeep) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (f *FldReadDeep) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FldReadDeep); ok {
-		return f.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
+		return f.TriggerIfDeepNilable.equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1199,10 +1199,10 @@ type LocalVarReadDeep struct {
 	ReadVar *types.Var
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (v *LocalVarReadDeep) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (v *LocalVarReadDeep) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*LocalVarReadDeep); ok {
-		return v.ProduceTriggerNever.Equals(other.ProduceTriggerNever) &&
+		return v.ProduceTriggerNever.equals(other.ProduceTriggerNever) &&
 			v.ReadVar == other.ReadVar
 	}
 	return false
@@ -1228,10 +1228,10 @@ type GlobalVarReadDeep struct {
 	*TriggerIfDeepNilable
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (g *GlobalVarReadDeep) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (g *GlobalVarReadDeep) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*GlobalVarReadDeep); ok {
-		return g.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
+		return g.TriggerIfDeepNilable.equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1266,10 +1266,10 @@ type GuardMissing struct {
 	OldAnnotation ProducingAnnotationTrigger
 }
 
-// Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (g *GuardMissing) Equals(other ProducingAnnotationTrigger) bool {
+// equals returns true if the passed ProducingAnnotationTrigger is equal to this one
+func (g *GuardMissing) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*GuardMissing); ok {
-		return g.ProduceTriggerTautology.Equals(other.ProduceTriggerTautology) && g.OldAnnotation.Equals(other.OldAnnotation)
+		return g.ProduceTriggerTautology.equals(other.ProduceTriggerTautology) && g.OldAnnotation.equals(other.OldAnnotation)
 	}
 	return false
 }
