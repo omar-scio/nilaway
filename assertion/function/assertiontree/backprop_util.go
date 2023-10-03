@@ -387,7 +387,7 @@ func exprAsConsumedByAssignment(rootNode *RootAssertionNode, expr ast.Node) *ann
 		t := util.TypeOf(rootNode.Pass(), exprType.X)
 		if util.TypeIsDeeplyMap(t) {
 			return &annotation.ConsumeTrigger{
-				Annotation: &annotation.MapWrittenTo{},
+				Annotation: &annotation.MapWrittenTo{ConsumeTriggerTautology: &annotation.ConsumeTriggerTautology{}},
 				Expr:       exprType.X,
 				Guards:     util.NoGuards(),
 			}
@@ -530,10 +530,11 @@ func exprAsAssignmentConsumer(rootNode *RootAssertionNode, expr ast.Node, exprRH
 				if ident, ok := expr.(*ast.Ident); ok {
 					varObj := rootNode.ObjectOf(ident).(*types.Var)
 					return &annotation.LocalVarAssignDeep{
-						LocalVar: varObj,
+						ConsumeTriggerTautology: &annotation.ConsumeTriggerTautology{},
+						LocalVar:                varObj,
 					}, nil
 				}
-				return &annotation.DeepAssignPrimitive{}, nil
+				return &annotation.DeepAssignPrimitive{ConsumeTriggerTautology: &annotation.ConsumeTriggerTautology{}}, nil
 			}
 			return nil, nil
 		}

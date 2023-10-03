@@ -520,7 +520,7 @@ func (r *RootAssertionNode) consumeIndexExpr(expr ast.Expr) {
 	t := r.Pass().TypesInfo.Types[expr].Type
 	if util.TypeIsDeeplySlice(t) {
 		r.AddConsumption(&annotation.ConsumeTrigger{
-			Annotation: &annotation.SliceAccess{},
+			Annotation: &annotation.SliceAccess{ConsumeTriggerTautology: &annotation.ConsumeTriggerTautology{}},
 			Expr:       expr,
 			Guards:     util.NoGuards(),
 		})
@@ -530,7 +530,7 @@ func (r *RootAssertionNode) consumeIndexExpr(expr ast.Expr) {
 	// encodes this optionality and is currently set to false
 	if config.ErrorOnNilableMapRead && util.TypeIsDeeplyMap(t) {
 		r.AddConsumption(&annotation.ConsumeTrigger{
-			Annotation: &annotation.MapAccess{},
+			Annotation: &annotation.MapAccess{ConsumeTriggerTautology: &annotation.ConsumeTriggerTautology{}},
 			Expr:       expr,
 			Guards:     util.NoGuards(),
 		})
@@ -762,7 +762,7 @@ func (r *RootAssertionNode) AddComputation(expr ast.Expr) {
 		if !allowNilable {
 			// We are in the default case -- it's a field/method access! Must be non-nil.
 			r.AddConsumption(&annotation.ConsumeTrigger{
-				Annotation: &annotation.FldAccess{Sel: r.ObjectOf(expr.Sel)},
+				Annotation: &annotation.FldAccess{ConsumeTriggerTautology: &annotation.ConsumeTriggerTautology{}, Sel: r.ObjectOf(expr.Sel)},
 				Expr:       expr.X,
 				Guards:     util.NoGuards(),
 			})
@@ -777,7 +777,7 @@ func (r *RootAssertionNode) AddComputation(expr ast.Expr) {
 			// For all the other slicing, the slice must be nonnil, so we create a consumer
 			// trigger.
 			r.AddConsumption(&annotation.ConsumeTrigger{
-				Annotation: &annotation.SliceAccess{},
+				Annotation: &annotation.SliceAccess{ConsumeTriggerTautology: &annotation.ConsumeTriggerTautology{}},
 				Expr:       expr.X,
 				Guards:     util.NoGuards(),
 			})
@@ -790,7 +790,7 @@ func (r *RootAssertionNode) AddComputation(expr ast.Expr) {
 	case *ast.StarExpr:
 		// pointer load! definitely must be non-nil
 		r.AddConsumption(&annotation.ConsumeTrigger{
-			Annotation: &annotation.PtrLoad{},
+			Annotation: &annotation.PtrLoad{ConsumeTriggerTautology: &annotation.ConsumeTriggerTautology{}},
 			Expr:       expr.X,
 			Guards:     util.NoGuards(),
 		})
@@ -803,7 +803,7 @@ func (r *RootAssertionNode) AddComputation(expr ast.Expr) {
 		if expr.Op == token.ARROW {
 			// added this consumer since receiving over a nil channel can cause panic
 			r.AddConsumption(&annotation.ConsumeTrigger{
-				Annotation: &annotation.ChanAccess{},
+				Annotation: &annotation.ChanAccess{ConsumeTriggerTautology: &annotation.ConsumeTriggerTautology{}},
 				Expr:       expr.X,
 				Guards:     util.NoGuards(),
 			})

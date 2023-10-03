@@ -118,7 +118,7 @@ func backpropAcrossNode(rootNode *RootAssertionNode, node ast.Node) error {
 func backpropAcrossSend(rootNode *RootAssertionNode, node *ast.SendStmt) error {
 	// Added this consumer since sending over a nil channel can cause panic
 	rootNode.AddConsumption(&annotation.ConsumeTrigger{
-		Annotation: &annotation.ChanAccess{},
+		Annotation: &annotation.ChanAccess{ConsumeTriggerTautology: &annotation.ConsumeTriggerTautology{}},
 		Expr:       node.Chan,
 		Guards:     util.NoGuards(),
 	})
