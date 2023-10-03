@@ -430,6 +430,15 @@ type FldAssign struct {
 	*TriggerIfNonNil
 }
 
+// func (f FldAssign) SetNeedsGuard(b bool) ConsumingAnnotationTrigger {
+// 	f.ApplyGuarding = b
+// 	return f
+// }
+//
+// func (f FldAssign) NeedsGuarding() bool {
+// 	return f.ApplyGuarding
+// }
+
 // equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
 func (f *FldAssign) equals(other ConsumingAnnotationTrigger) bool {
 	if other, ok := other.(*FldAssign); ok {
