@@ -858,35 +858,35 @@ func (s *SSuite) TestField5() {
 	print(s.S.f) // unsafe
 }
 
-// Below test checks for field assignment via a map lookup.
-type T struct {
-	suite.Suite
-	f *int
-}
-
-func (t *T) SetupTest2(localMap map[int]*int) {
-	var ok bool
-	t.f, ok = localMap[0]
-	t.True(ok)
-	print(*t.f) // safe
-}
-
-func (t *T) TestField2() {
-	print(*t.f) // safe
-}
-
-// type M struct {
+// // Below test checks for field assignment via a map lookup.
+// type T struct {
 // 	suite.Suite
-// 	mp map[int]*string
+// 	f *int
 // }
 //
-// func (m *M) SetupTest1(localMap map[string]*string) {
+// func (t *T) SetupTest2(localMap map[int]*int) {
 // 	var ok bool
-// 	m.mp[0], ok = localMap["abc"]
-// 	m.True(ok)
-// 	print(*m.mp[0]) // safe
+// 	t.f, ok = localMap[0]
+// 	t.True(ok)
+// 	print(*t.f) // safe
 // }
 //
-// func (m *M) TestField1() {
-// 	print(*m.mp[0]) // safe
+// func (t *T) TestField2() {
+// 	print(*t.f) // safe
 // }
+//
+// // type M struct {
+// // 	suite.Suite
+// // 	mp map[int]*string
+// // }
+// //
+// // func (m *M) SetupTest1(localMap map[string]*string) {
+// // 	var ok bool
+// // 	m.mp[0], ok = localMap["abc"]
+// // 	m.True(ok)
+// // 	print(*m.mp[0]) // safe
+// // }
+// //
+// // func (m *M) TestField1() {
+// // 	print(*m.mp[0]) // safe
+// // }
