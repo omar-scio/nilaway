@@ -68,7 +68,8 @@ type ProducingAnnotationTrigger interface {
 // TriggerIfNilable is a general trigger indicating that the bad case occurs when a certain Annotation
 // key is nilable
 type TriggerIfNilable struct {
-	Ann Key
+	Ann        Key
+	NeedsGuard bool
 }
 
 // Prestring returns this Prestring as a Prestring
@@ -93,13 +94,13 @@ func (t *TriggerIfNilable) CheckProduce(annMap Map) bool {
 // applies mostly to deep reads, but this behavior is overriden
 // for `VariadicFuncParamDeep`s, which have the semantics of
 // deep reads despite consulting shallow annotations
-func (*TriggerIfNilable) NeedsGuardMatch() bool { return false }
+func (t *TriggerIfNilable) NeedsGuardMatch() bool { return t.NeedsGuard }
 
 // SetNeedsGuard for a `TriggerIfNilable` is, by default, a noop, as guarding
 // applies mostly to deep reads, but this behavior is overriden
 // for `VariadicFuncParamDeep`s, which have the semantics of
 // deep reads despite consulting shallow annotations
-func (t *TriggerIfNilable) SetNeedsGuard(bool) {}
+func (t *TriggerIfNilable) SetNeedsGuard(b bool) { t.NeedsGuard = b }
 
 // Kind returns Conditional.
 func (t *TriggerIfNilable) Kind() TriggerKind { return Conditional }
@@ -110,7 +111,7 @@ func (t *TriggerIfNilable) UnderlyingSite() Key { return t.Ann }
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (t *TriggerIfNilable) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*TriggerIfNilable); ok {
-		return t.Ann.Equals(other.Ann)
+		return t.Ann.Equals(other.Ann) && t.NeedsGuard == other.NeedsGuard
 	}
 	return false
 }
@@ -118,7 +119,8 @@ func (t *TriggerIfNilable) Equals(other ProducingAnnotationTrigger) bool {
 // TriggerIfDeepNilable is a general trigger indicating the the bad case occurs when a certain Annotation
 // key is deeply nilable
 type TriggerIfDeepNilable struct {
-	Ann Key
+	Ann        Key
+	NeedsGuard bool
 }
 
 // Prestring returns this Prestring as a Prestring
@@ -142,11 +144,11 @@ func (t *TriggerIfDeepNilable) CheckProduce(annMap Map) bool {
 // NeedsGuardMatch for a `TriggerIfDeepNilable` is default false,
 // but overridden for most concrete triggers to read a boolean
 // field
-func (*TriggerIfDeepNilable) NeedsGuardMatch() bool { return false }
+func (t *TriggerIfDeepNilable) NeedsGuardMatch() bool { return t.NeedsGuard }
 
 // SetNeedsGuard for a `TriggerIfDeepNilable` is, by default, a noop,
 // but overridden for most concrete triggers to set an underlying field
-func (t *TriggerIfDeepNilable) SetNeedsGuard(bool) {}
+func (t *TriggerIfDeepNilable) SetNeedsGuard(b bool) { t.NeedsGuard = b }
 
 // Kind returns DeepConditional.
 func (t *TriggerIfDeepNilable) Kind() TriggerKind { return DeepConditional }
@@ -157,13 +159,15 @@ func (t *TriggerIfDeepNilable) UnderlyingSite() Key { return t.Ann }
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (t *TriggerIfDeepNilable) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*TriggerIfDeepNilable); ok {
-		return t.Ann.Equals(other.Ann)
+		return t.Ann.Equals(other.Ann) && t.NeedsGuard == other.NeedsGuard
 	}
 	return false
 }
 
 // ProduceTriggerTautology is used for trigger producers that will always result in nil
-type ProduceTriggerTautology struct{}
+type ProduceTriggerTautology struct {
+	NeedsGuard bool
+}
 
 // CheckProduce returns true
 func (*ProduceTriggerTautology) CheckProduce(Map) bool {
@@ -171,10 +175,12 @@ func (*ProduceTriggerTautology) CheckProduce(Map) bool {
 }
 
 // NeedsGuardMatch for a ProduceTriggerTautology is false - there is no wiggle room with these
-func (*ProduceTriggerTautology) NeedsGuardMatch() bool { return false }
+func (p *ProduceTriggerTautology) NeedsGuardMatch() bool {
+	return p.NeedsGuard
+}
 
 // SetNeedsGuard for a ProduceTriggerTautology is a noop
-func (p *ProduceTriggerTautology) SetNeedsGuard(bool) {}
+func (p *ProduceTriggerTautology) SetNeedsGuard(b bool) { p.NeedsGuard = b }
 
 // Prestring returns this Prestring as a Prestring
 func (*ProduceTriggerTautology) Prestring() Prestring {
@@ -195,13 +201,17 @@ func (*ProduceTriggerTautology) Kind() TriggerKind { return Always }
 func (*ProduceTriggerTautology) UnderlyingSite() Key { return nil }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (*ProduceTriggerTautology) Equals(other ProducingAnnotationTrigger) bool {
-	_, ok := other.(*ProduceTriggerTautology)
-	return ok
+func (p *ProduceTriggerTautology) Equals(other ProducingAnnotationTrigger) bool {
+	if other, ok := other.(*ProduceTriggerTautology); ok {
+		return p.NeedsGuard == other.NeedsGuard
+	}
+	return false
 }
 
 // ProduceTriggerNever is used for trigger producers that will never be nil
-type ProduceTriggerNever struct{}
+type ProduceTriggerNever struct {
+	NeedsGuard bool
+}
 
 // Prestring returns this Prestring as a Prestring
 func (*ProduceTriggerNever) Prestring() Prestring {
@@ -221,10 +231,10 @@ func (*ProduceTriggerNever) CheckProduce(Map) bool {
 }
 
 // NeedsGuardMatch for a ProduceTriggerNever is false, like ProduceTriggerTautology
-func (*ProduceTriggerNever) NeedsGuardMatch() bool { return false }
+func (p *ProduceTriggerNever) NeedsGuardMatch() bool { return p.NeedsGuard }
 
 // SetNeedsGuard for a ProduceTriggerNever is a noop, like ProduceTriggerTautology
-func (p *ProduceTriggerNever) SetNeedsGuard(bool) {}
+func (p *ProduceTriggerNever) SetNeedsGuard(b bool) { p.NeedsGuard = b }
 
 // Kind returns Never.
 func (*ProduceTriggerNever) Kind() TriggerKind { return Never }
@@ -233,9 +243,11 @@ func (*ProduceTriggerNever) Kind() TriggerKind { return Never }
 func (*ProduceTriggerNever) UnderlyingSite() Key { return nil }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
-func (*ProduceTriggerNever) Equals(other ProducingAnnotationTrigger) bool {
-	_, ok := other.(*ProduceTriggerNever)
-	return ok
+func (p *ProduceTriggerNever) Equals(other ProducingAnnotationTrigger) bool {
+	if other, ok := other.(*ProduceTriggerNever); ok {
+		return p.NeedsGuard == other.NeedsGuard
+	}
+	return false
 }
 
 // note: each of the following two productions, ExprOkCheck, and RangeIndexAssignment, should be
@@ -751,13 +763,12 @@ func (f FldReturnPrestring) String() string {
 // context sensitivity.
 type FuncReturn struct {
 	*TriggerIfNilable
-	Guarded bool
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (f *FuncReturn) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FuncReturn); ok {
-		return f.TriggerIfNilable.Equals(other.TriggerIfNilable) && f.Guarded == other.Guarded
+		return f.TriggerIfNilable.Equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -790,17 +801,6 @@ func (f FuncReturnPrestring) String() string {
 		sb.WriteString(fmt.Sprintf(" at %s", f.Location))
 	}
 	return sb.String()
-}
-
-// NeedsGuardMatch for a FuncReturn returns whether this function return is guarded.
-// Function returns should be guarded iff they are the non-error return of an error-returning function
-func (f *FuncReturn) NeedsGuardMatch() bool {
-	return f.Guarded
-}
-
-// SetNeedsGuard for a FuncReturn sets its Guarded field - but right now there is no valid use case for this
-func (f *FuncReturn) SetNeedsGuard(b bool) {
-	f.Guarded = b
 }
 
 // MethodReturn is used when a value is determined to flow from the return of a method
@@ -940,13 +940,12 @@ func (g GlobalVarReadPrestring) String() string {
 // These should always be instantiated with NeedsGuard = true
 type MapRead struct {
 	*TriggerIfDeepNilable
-	NeedsGuard bool
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (m *MapRead) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*MapRead); ok {
-		return m.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable) && m.NeedsGuard == other.NeedsGuard
+		return m.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -964,14 +963,6 @@ type MapReadPrestring struct {
 
 func (m MapReadPrestring) String() string {
 	return fmt.Sprintf("index of a map of type `%s`", m.TypeName)
-}
-
-// NeedsGuardMatch for a map read is always true - map reads are always intended to be guarded unless checked
-func (m *MapRead) NeedsGuardMatch() bool { return m.NeedsGuard }
-
-// SetNeedsGuard for a map read sets the field NeedsGuard
-func (m *MapRead) SetNeedsGuard(b bool) {
-	m.NeedsGuard = b
 }
 
 // ArrayRead is when a value is determined to flow from an array index expression
@@ -1061,13 +1052,12 @@ func (p PtrReadPrestring) String() string {
 // ChanRecv is when a value is determined to flow from a channel receive
 type ChanRecv struct {
 	*TriggerIfDeepNilable
-	NeedsGuard bool
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (c *ChanRecv) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*ChanRecv); ok {
-		return c.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable) && c.NeedsGuard == other.NeedsGuard
+		return c.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1087,25 +1077,15 @@ func (c ChanRecvPrestring) String() string {
 	return fmt.Sprintf("received from a channel of type `%s`", c.TypeName)
 }
 
-// NeedsGuardMatch for a ChanRecv reads the field NeedsGuard of the
-// struct - set to indicate whether the channel receive is in the `v, ok := <- ch` form
-func (c *ChanRecv) NeedsGuardMatch() bool { return c.NeedsGuard }
-
-// SetNeedsGuard for a channel receive sets the field NeedsGuard if it is in the `v, ok := <- ch` form
-func (c *ChanRecv) SetNeedsGuard(b bool) {
-	c.NeedsGuard = b
-}
-
 // FuncParamDeep is used when a value is determined to flow deeply from a function parameter
 type FuncParamDeep struct {
 	*TriggerIfDeepNilable
-	NeedsGuard bool
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (f *FuncParamDeep) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FuncParamDeep); ok {
-		return f.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable) && f.NeedsGuard == other.NeedsGuard
+		return f.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1125,26 +1105,16 @@ func (f FuncParamDeepPrestring) String() string {
 	return fmt.Sprintf("deep read from parameter `%s`", f.ParamName)
 }
 
-// NeedsGuardMatch for a FuncParamDeep reads the field NeedsGuard of the
-// struct - set to indicate whether the func param is of type `map` or `channel`
-func (f *FuncParamDeep) NeedsGuardMatch() bool { return f.NeedsGuard }
-
-// SetNeedsGuard for a FuncParamDeep sets the field NeedsGuard
-func (f *FuncParamDeep) SetNeedsGuard(b bool) {
-	f.NeedsGuard = b
-}
-
 // VariadicFuncParamDeep is used when a value is determined to flow deeply from a variadic function
 // parameter, and thus be nilable iff the shallow Annotation on that parameter is nilable
 type VariadicFuncParamDeep struct {
 	*TriggerIfNilable
-	NeedsGuard bool
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (v *VariadicFuncParamDeep) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*VariadicFuncParamDeep); ok {
-		return v.TriggerIfNilable.Equals(other.TriggerIfNilable) && v.NeedsGuard == other.NeedsGuard
+		return v.TriggerIfNilable.Equals(other.TriggerIfNilable)
 	}
 	return false
 }
@@ -1163,26 +1133,16 @@ func (v VariadicFuncParamDeepPrestring) String() string {
 	return fmt.Sprintf("index of variadic parameter `%s`", v.ParamName)
 }
 
-// NeedsGuardMatch for a VariadicFuncParamDeep reads the field NeedsGuard of the
-// struct - set to indicate whether the variadic func param is of type `map` or `channel`
-func (v *VariadicFuncParamDeep) NeedsGuardMatch() bool { return v.NeedsGuard }
-
-// SetNeedsGuard for a VariadicFuncParamDeep sets its underlying field NeedsGuard
-func (v *VariadicFuncParamDeep) SetNeedsGuard(b bool) {
-	v.NeedsGuard = b
-}
-
 // FuncReturnDeep is used when a value is determined to flow from the deep Annotation of the return
 // of a function
 type FuncReturnDeep struct {
 	*TriggerIfDeepNilable
-	NeedsGuard bool
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (f *FuncReturnDeep) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FuncReturnDeep); ok {
-		return f.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable) && f.NeedsGuard == other.NeedsGuard
+		return f.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1203,26 +1163,16 @@ func (f FuncReturnDeepPrestring) String() string {
 	return fmt.Sprintf("deep read from result %d of `%s()`", f.RetNum, f.FuncName)
 }
 
-// NeedsGuardMatch for a FuncReturnDeep reads the field NeedsGuard of the
-// struct - set to indicate whether the func return is of type `map` or `channel`
-func (f *FuncReturnDeep) NeedsGuardMatch() bool { return f.NeedsGuard }
-
-// SetNeedsGuard for a FuncReturnDeep sets the field NeedsGuard
-func (f *FuncReturnDeep) SetNeedsGuard(b bool) {
-	f.NeedsGuard = b
-}
-
 // FldReadDeep is used when a value is determined to flow from the deep Annotation of a field that is
 // read and then indexed into - for example x.f[0]
 type FldReadDeep struct {
 	*TriggerIfDeepNilable
-	NeedsGuard bool
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (f *FldReadDeep) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*FldReadDeep); ok {
-		return f.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable) && f.NeedsGuard == other.NeedsGuard
+		return f.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1242,28 +1192,17 @@ func (f FldReadDeepPrestring) String() string {
 	return fmt.Sprintf("deep read from field `%s`", f.FieldName)
 }
 
-// NeedsGuardMatch for a FldReadDeep reads the field NeedsGuard of the
-// struct - set to indicate whether the field read is of type `map` or `channel`
-func (f *FldReadDeep) NeedsGuardMatch() bool { return f.NeedsGuard }
-
-// SetNeedsGuard for a FldReadDeep sets its underlying field NeedsGuard
-func (f *FldReadDeep) SetNeedsGuard(b bool) {
-	f.NeedsGuard = b
-}
-
 // LocalVarReadDeep is when a value is determined to flow deeply from a local variable. It is never nilable
 // if appropriately guarded.
 type LocalVarReadDeep struct {
 	*ProduceTriggerNever
-	NeedsGuard bool
-	ReadVar    *types.Var
+	ReadVar *types.Var
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (v *LocalVarReadDeep) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*LocalVarReadDeep); ok {
 		return v.ProduceTriggerNever.Equals(other.ProduceTriggerNever) &&
-			v.NeedsGuard == other.NeedsGuard &&
 			v.ReadVar == other.ReadVar
 	}
 	return false
@@ -1283,26 +1222,16 @@ func (v LocalVarReadDeepPrestring) String() string {
 	return fmt.Sprintf("deep read from variable `%s`", v.VarName)
 }
 
-// NeedsGuardMatch for a LocalVarReadDeep reads the field NeedsGuard of the
-// struct - set to indicate whether the global variable is of map or channel type
-func (v *LocalVarReadDeep) NeedsGuardMatch() bool { return v.NeedsGuard }
-
-// SetNeedsGuard for a VarReadDeep writes the field NeedsGuard
-func (v *LocalVarReadDeep) SetNeedsGuard(b bool) {
-	v.NeedsGuard = b
-}
-
 // GlobalVarReadDeep is when a value is determined to flow from the deep Annotation of a global variable
 // that is read and indexed into
 type GlobalVarReadDeep struct {
 	*TriggerIfDeepNilable
-	NeedsGuard bool
 }
 
 // Equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (g *GlobalVarReadDeep) Equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*GlobalVarReadDeep); ok {
-		return g.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable) && g.NeedsGuard == other.NeedsGuard
+		return g.TriggerIfDeepNilable.Equals(other.TriggerIfDeepNilable)
 	}
 	return false
 }
@@ -1320,15 +1249,6 @@ type GlobalVarReadDeepPrestring struct {
 
 func (g GlobalVarReadDeepPrestring) String() string {
 	return fmt.Sprintf("deep read from global variable `%s`", g.VarName)
-}
-
-// NeedsGuardMatch for a GlobalVarReadDeep reads the field NeedsGuard of the
-// struct - set to indicate whether the global variable is of type `map` or `channel`
-func (g *GlobalVarReadDeep) NeedsGuardMatch() bool { return g.NeedsGuard }
-
-// SetNeedsGuard for a GlobalVarReadDeep writes the field NeedsGuard
-func (g *GlobalVarReadDeep) SetNeedsGuard(b bool) {
-	g.NeedsGuard = b
 }
 
 // GuardMissing is when a value is determined to flow from a site that requires a guard,

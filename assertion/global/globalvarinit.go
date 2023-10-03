@@ -106,7 +106,7 @@ func getGlobalProducer(pass *analysis.Pass, valspec *ast.ValueSpec, lid int, rid
 		// if rhs is literal nil
 		if rhs.Name == "nil" {
 			prod = &annotation.ProduceTrigger{
-				Annotation: &annotation.ConstNil{},
+				Annotation: &annotation.ConstNil{ProduceTriggerTautology: &annotation.ProduceTriggerTautology{}},
 				Expr:       rhs,
 			}
 		} else {
@@ -162,8 +162,7 @@ func getProducerForFuncCall(pass *analysis.Pass, methName *ast.Ident, lid int, r
 
 	prod := &annotation.ProduceTrigger{
 		Annotation: &annotation.FuncReturn{
-			TriggerIfNilable: &annotation.TriggerIfNilable{Ann: retKey},
-			Guarded:          false,
+			TriggerIfNilable: &annotation.TriggerIfNilable{Ann: retKey, NeedsGuard: false},
 		},
 		Expr: rhs,
 	}

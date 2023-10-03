@@ -500,7 +500,7 @@ func (r *RootAssertionNode) AddGuardMatch(expr ast.Expr, behavior GuardMatchBeha
 			if consumer.Guards.Contains(guard) {
 				r.AddNewTriggers(annotation.FullTrigger{
 					Producer: &annotation.ProduceTrigger{
-						Annotation: &annotation.OkReadReflCheck{},
+						Annotation: &annotation.OkReadReflCheck{ProduceTriggerNever: &annotation.ProduceTriggerNever{}},
 						Expr:       expr,
 					},
 					Consumer: consumer,
@@ -559,7 +559,7 @@ func (r *RootAssertionNode) AddComputation(expr ast.Expr) {
 		if expr.Op == token.LAND {
 			if retExpr, retType := asNilCheckExpr(expr.X); retType == _negativeNilCheck {
 				r.AddProduction(&annotation.ProduceTrigger{
-					Annotation: &annotation.NegativeNilCheck{},
+					Annotation: &annotation.NegativeNilCheck{ProduceTriggerNever: &annotation.ProduceTriggerNever{}},
 					Expr:       retExpr,
 				})
 				return

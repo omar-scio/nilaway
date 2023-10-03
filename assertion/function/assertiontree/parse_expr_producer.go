@@ -63,7 +63,7 @@ func (r *RootAssertionNode) ParseExprAsProducer(expr ast.Expr, doNotTrack bool) 
 		if r.isNil(expr) {
 			return nil, []producer.ParsedProducer{producer.ShallowParsedProducer{
 				Producer: &annotation.ProduceTrigger{
-					Annotation: &annotation.ConstNil{},
+					Annotation: &annotation.ConstNil{ProduceTriggerTautology: &annotation.ProduceTriggerTautology{}},
 					Expr:       expr,
 				},
 			}}
@@ -436,11 +436,11 @@ func (r *RootAssertionNode) getFuncReturnProducers(ident *ast.Ident, expr *ast.C
 				Annotation: &annotation.FuncReturn{
 					TriggerIfNilable: &annotation.TriggerIfNilable{
 						Ann: retKey,
+						// for an error-returning function, all but the last result are guarded
+						// TODO: add an annotation that allows more results to escape from guarding
+						// such as "error-nonnil" or "always-nonnil"
+						NeedsGuard: isErrReturning && i != numResults-1,
 					},
-					// for an error-returning function, all but the last result are guarded
-					// TODO: add an annotation that allows more results to escape from guarding
-					// such as "error-nonnil" or "always-nonnil"
-					Guarded: isErrReturning && i != numResults-1,
 				},
 				Expr: expr,
 			},
@@ -476,7 +476,7 @@ func (r *RootAssertionNode) parseStructCreateExprAsProducer(expr ast.Expr, field
 
 			if fieldVal == nil {
 				// this means the field is not assigned any value, thus unassigned field should be produced
-				fieldProducerArray[i] = &annotation.ProduceTrigger{Annotation: &annotation.UnassignedFld{}}
+				fieldProducerArray[i] = &annotation.ProduceTrigger{Annotation: &annotation.UnassignedFld{ProduceTriggerTautology: &annotation.ProduceTriggerTautology{}}}
 			} else {
 				// do not track. Get producer for expression `fieldVal` assigned to the field
 				_, fieldProducer := r.ParseExprAsProducer(fieldVal, true)

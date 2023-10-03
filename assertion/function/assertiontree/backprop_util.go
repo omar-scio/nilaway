@@ -166,7 +166,7 @@ func computeAndConsumeResults(rootNode *RootAssertionNode, node *ast.ReturnStmt)
 					// special handling if retVariable is a blank identifier (e.g., _ *int)
 					if !util.ExprBarsNilness(rootNode.Pass(), retVariable) {
 						producer := &annotation.ProduceTrigger{
-							Annotation: &annotation.BlankVarReturn{},
+							Annotation: &annotation.BlankVarReturn{ProduceTriggerTautology: &annotation.ProduceTriggerTautology{}},
 							Expr:       retVariable,
 						}
 						fullTrigger := annotation.FullTrigger{
@@ -695,7 +695,7 @@ func blocksAndPreprocessingFromCFG(
 				&preprocessPair{
 					trueBranchFunc: func(node *RootAssertionNode) { // producing ranging expression as nonnil
 						node.AddProduction(&annotation.ProduceTrigger{
-							Annotation: &annotation.RangeOver{},
+							Annotation: &annotation.RangeOver{ProduceTriggerNever: &annotation.ProduceTriggerNever{}},
 							Expr:       rangeExpr,
 						})
 					},
@@ -738,7 +738,8 @@ func CheckGuardOnFullTrigger(trigger annotation.FullTrigger) annotation.FullTrig
 		return annotation.FullTrigger{
 			Producer: &annotation.ProduceTrigger{
 				Annotation: &annotation.GuardMissing{
-					OldAnnotation: trigger.Producer.Annotation,
+					ProduceTriggerTautology: &annotation.ProduceTriggerTautology{},
+					OldAnnotation:           trigger.Producer.Annotation,
 				},
 				Expr: trigger.Producer.Expr,
 			},

@@ -188,7 +188,7 @@ func (r *RootAssertionNode) addProductionForVarFieldNode(varNode *varAssertionNo
 			if varAstExpr == selExpr.X {
 				r.AddProduction(
 					&annotation.ProduceTrigger{
-						Annotation: &annotation.UnassignedFld{},
+						Annotation: &annotation.UnassignedFld{ProduceTriggerTautology: &annotation.ProduceTriggerTautology{}},
 						Expr:       selExpr,
 					})
 			}

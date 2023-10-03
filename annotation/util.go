@@ -43,9 +43,10 @@ func DeepNilabilityAsNamedType(typ types.Type) ProducingAnnotationTrigger {
 	case *types.Array:
 		return &ArrayRead{TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj())}
 	case *types.Map:
+		trigger := nameAsDeepTrigger(t.Obj())
+		trigger.NeedsGuard = true
 		return &MapRead{
-			TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj()),
-			NeedsGuard:           true,
+			TriggerIfDeepNilable: trigger,
 		}
 	case *types.Pointer:
 		return &PtrRead{TriggerIfDeepNilable: nameAsDeepTrigger(t.Obj())}
@@ -63,8 +64,9 @@ func DeepNilabilityOfFuncRet(fn *types.Func, retNum int) ProducingAnnotationTrig
 	if util.TypeIsDeep(retType) {
 		return &FuncReturnDeep{
 			TriggerIfDeepNilable: &TriggerIfDeepNilable{
-				Ann: RetKeyFromRetNum(fn, retNum)},
-			NeedsGuard: util.TypeIsDeeplyMap(retType)}
+				Ann:        RetKeyFromRetNum(fn, retNum),
+				NeedsGuard: util.TypeIsDeeplyMap(retType)},
+		}
 	}
 	return DeepNilabilityAsNamedType(retType)
 }
@@ -76,8 +78,9 @@ func DeepNilabilityOfFld(fld *types.Var) ProducingAnnotationTrigger {
 		return &FldReadDeep{
 			TriggerIfDeepNilable: &TriggerIfDeepNilable{
 				Ann: &FieldAnnotationKey{
-					FieldDecl: fld}},
-			NeedsGuard: util.TypeIsDeeplyMap(fld.Type())}
+					FieldDecl: fld},
+				NeedsGuard: util.TypeIsDeeplyMap(fld.Type())},
+		}
 	}
 	return DeepNilabilityAsNamedType(fld.Type())
 }
@@ -92,8 +95,9 @@ func DeepNilabilityOfVar(fdecl *types.Func, v *types.Var) ProducingAnnotationTri
 				TriggerIfDeepNilable: &TriggerIfDeepNilable{
 					Ann: &GlobalVarAnnotationKey{
 						VarDecl: v,
-					}},
-				NeedsGuard: util.TypeIsDeeplyMap(v.Type())}
+					},
+					NeedsGuard: util.TypeIsDeeplyMap(v.Type())},
+			}
 		}
 		if VarIsParam(fdecl, v) {
 			return paramAsDeepProducer(fdecl, v)
@@ -107,8 +111,8 @@ func DeepNilabilityOfVar(fdecl *types.Func, v *types.Var) ProducingAnnotationTri
 		}
 		// in this case, the deep nilability of the variable is dependent only on its possible guarding
 		return &LocalVarReadDeep{
-			ReadVar:    v,
-			NeedsGuard: util.TypeIsDeeplyMap(v.Type())}
+			ReadVar:             v,
+			ProduceTriggerNever: &ProduceTriggerNever{NeedsGuard: util.TypeIsDeeplyMap(v.Type())}}
 	}
 	// otherwise, the deep nilability of this variable is either that of its named type,
 	// or not deeply nilable - a logical split captured in the method DeepNilabilityAsNamedType
@@ -164,7 +168,7 @@ func ParamAsProducer(fdecl *types.Func, param *types.Var) ProducingAnnotationTri
 		panic(fmt.Sprintf("non-param %s passed to ParamAsProducer", param.Name()))
 	}
 	if VarIsVariadicParam(fdecl, param) {
-		return &VariadicFuncParam{VarDecl: param}
+		return &VariadicFuncParam{ProduceTriggerTautology: &ProduceTriggerTautology{}, VarDecl: param}
 	}
 	return &FuncParam{
 		TriggerIfNilable: &TriggerIfNilable{
@@ -185,13 +189,14 @@ func paramAsDeepProducer(fdecl *types.Func, param *types.Var) ProducingAnnotatio
 	if VarIsVariadicParam(fdecl, param) {
 		return &VariadicFuncParamDeep{
 			TriggerIfNilable: &TriggerIfNilable{
-				Ann: paramKey},
-			NeedsGuard: util.TypeIsDeeplyMap(param.Type())}
+				Ann:        paramKey,
+				NeedsGuard: util.TypeIsDeeplyMap(param.Type())}}
 	}
 	return &FuncParamDeep{
 		TriggerIfDeepNilable: &TriggerIfDeepNilable{
-			Ann: paramKey},
-		NeedsGuard: util.TypeIsDeeplyMap(param.Type())}
+			Ann:        paramKey,
+			NeedsGuard: util.TypeIsDeeplyMap(param.Type())},
+	}
 }
 
 // NewRetFldAnnKey returns the RetFieldAnnotationKey for return at retNum and the field fieldDecl.

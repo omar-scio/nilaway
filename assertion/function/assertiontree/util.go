@@ -231,7 +231,7 @@ func AddNilCheck(pass *analysis.Pass, expr ast.Expr) (trueCheck, falseCheck Root
 	}
 
 	produceNegativeNilCheck := func(expr ast.Expr) RootFunc {
-		return produceExprByTrigger(expr, &annotation.NegativeNilCheck{})
+		return produceExprByTrigger(expr, &annotation.NegativeNilCheck{ProduceTriggerNever: &annotation.ProduceTriggerNever{}})
 	}
 
 	// An exprCheck is a pattern that we match on that, if successful, will give us a pair
