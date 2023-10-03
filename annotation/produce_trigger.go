@@ -50,7 +50,7 @@ type ProducingAnnotationTrigger interface {
 
 	// SetNeedsGuard sets the underlying Guard-Neediness of this ProduceTrigger, if present
 	// This should be very sparingly used, and only with utter conviction of correctness
-	SetNeedsGuard(bool) ProducingAnnotationTrigger
+	SetNeedsGuard(bool)
 
 	Prestring() Prestring
 
@@ -99,7 +99,7 @@ func (*TriggerIfNilable) NeedsGuardMatch() bool { return false }
 // applies mostly to deep reads, but this behavior is overriden
 // for `VariadicFuncParamDeep`s, which have the semantics of
 // deep reads despite consulting shallow annotations
-func (t *TriggerIfNilable) SetNeedsGuard(bool) ProducingAnnotationTrigger { return t }
+func (t *TriggerIfNilable) SetNeedsGuard(bool) {}
 
 // Kind returns Conditional.
 func (t *TriggerIfNilable) Kind() TriggerKind { return Conditional }
@@ -146,7 +146,7 @@ func (*TriggerIfDeepNilable) NeedsGuardMatch() bool { return false }
 
 // SetNeedsGuard for a `TriggerIfDeepNilable` is, by default, a noop,
 // but overridden for most concrete triggers to set an underlying field
-func (t *TriggerIfDeepNilable) SetNeedsGuard(bool) ProducingAnnotationTrigger { return t }
+func (t *TriggerIfDeepNilable) SetNeedsGuard(bool) {}
 
 // Kind returns DeepConditional.
 func (t *TriggerIfDeepNilable) Kind() TriggerKind { return DeepConditional }
@@ -174,7 +174,7 @@ func (*ProduceTriggerTautology) CheckProduce(Map) bool {
 func (*ProduceTriggerTautology) NeedsGuardMatch() bool { return false }
 
 // SetNeedsGuard for a ProduceTriggerTautology is a noop
-func (p *ProduceTriggerTautology) SetNeedsGuard(bool) ProducingAnnotationTrigger { return p }
+func (p *ProduceTriggerTautology) SetNeedsGuard(bool) {}
 
 // Prestring returns this Prestring as a Prestring
 func (*ProduceTriggerTautology) Prestring() Prestring {
@@ -224,7 +224,7 @@ func (*ProduceTriggerNever) CheckProduce(Map) bool {
 func (*ProduceTriggerNever) NeedsGuardMatch() bool { return false }
 
 // SetNeedsGuard for a ProduceTriggerNever is a noop, like ProduceTriggerTautology
-func (p *ProduceTriggerNever) SetNeedsGuard(bool) ProducingAnnotationTrigger { return p }
+func (p *ProduceTriggerNever) SetNeedsGuard(bool) {}
 
 // Kind returns Never.
 func (*ProduceTriggerNever) Kind() TriggerKind { return Never }
@@ -799,9 +799,8 @@ func (f *FuncReturn) NeedsGuardMatch() bool {
 }
 
 // SetNeedsGuard for a FuncReturn sets its Guarded field - but right now there is no valid use case for this
-func (f *FuncReturn) SetNeedsGuard(b bool) ProducingAnnotationTrigger {
+func (f *FuncReturn) SetNeedsGuard(b bool) {
 	f.Guarded = b
-	return f
 }
 
 // MethodReturn is used when a value is determined to flow from the return of a method
@@ -971,9 +970,8 @@ func (m MapReadPrestring) String() string {
 func (m *MapRead) NeedsGuardMatch() bool { return m.NeedsGuard }
 
 // SetNeedsGuard for a map read sets the field NeedsGuard
-func (m *MapRead) SetNeedsGuard(b bool) ProducingAnnotationTrigger {
+func (m *MapRead) SetNeedsGuard(b bool) {
 	m.NeedsGuard = b
-	return m
 }
 
 // ArrayRead is when a value is determined to flow from an array index expression
@@ -1094,9 +1092,8 @@ func (c ChanRecvPrestring) String() string {
 func (c *ChanRecv) NeedsGuardMatch() bool { return c.NeedsGuard }
 
 // SetNeedsGuard for a channel receive sets the field NeedsGuard if it is in the `v, ok := <- ch` form
-func (c *ChanRecv) SetNeedsGuard(b bool) ProducingAnnotationTrigger {
+func (c *ChanRecv) SetNeedsGuard(b bool) {
 	c.NeedsGuard = b
-	return c
 }
 
 // FuncParamDeep is used when a value is determined to flow deeply from a function parameter
@@ -1133,9 +1130,8 @@ func (f FuncParamDeepPrestring) String() string {
 func (f *FuncParamDeep) NeedsGuardMatch() bool { return f.NeedsGuard }
 
 // SetNeedsGuard for a FuncParamDeep sets the field NeedsGuard
-func (f *FuncParamDeep) SetNeedsGuard(b bool) ProducingAnnotationTrigger {
+func (f *FuncParamDeep) SetNeedsGuard(b bool) {
 	f.NeedsGuard = b
-	return f
 }
 
 // VariadicFuncParamDeep is used when a value is determined to flow deeply from a variadic function
@@ -1172,9 +1168,8 @@ func (v VariadicFuncParamDeepPrestring) String() string {
 func (v *VariadicFuncParamDeep) NeedsGuardMatch() bool { return v.NeedsGuard }
 
 // SetNeedsGuard for a VariadicFuncParamDeep sets its underlying field NeedsGuard
-func (v *VariadicFuncParamDeep) SetNeedsGuard(b bool) ProducingAnnotationTrigger {
+func (v *VariadicFuncParamDeep) SetNeedsGuard(b bool) {
 	v.NeedsGuard = b
-	return v
 }
 
 // FuncReturnDeep is used when a value is determined to flow from the deep Annotation of the return
@@ -1213,9 +1208,8 @@ func (f FuncReturnDeepPrestring) String() string {
 func (f *FuncReturnDeep) NeedsGuardMatch() bool { return f.NeedsGuard }
 
 // SetNeedsGuard for a FuncReturnDeep sets the field NeedsGuard
-func (f *FuncReturnDeep) SetNeedsGuard(b bool) ProducingAnnotationTrigger {
+func (f *FuncReturnDeep) SetNeedsGuard(b bool) {
 	f.NeedsGuard = b
-	return f
 }
 
 // FldReadDeep is used when a value is determined to flow from the deep Annotation of a field that is
@@ -1253,9 +1247,8 @@ func (f FldReadDeepPrestring) String() string {
 func (f *FldReadDeep) NeedsGuardMatch() bool { return f.NeedsGuard }
 
 // SetNeedsGuard for a FldReadDeep sets its underlying field NeedsGuard
-func (f *FldReadDeep) SetNeedsGuard(b bool) ProducingAnnotationTrigger {
+func (f *FldReadDeep) SetNeedsGuard(b bool) {
 	f.NeedsGuard = b
-	return f
 }
 
 // LocalVarReadDeep is when a value is determined to flow deeply from a local variable. It is never nilable
@@ -1295,9 +1288,8 @@ func (v LocalVarReadDeepPrestring) String() string {
 func (v *LocalVarReadDeep) NeedsGuardMatch() bool { return v.NeedsGuard }
 
 // SetNeedsGuard for a VarReadDeep writes the field NeedsGuard
-func (v *LocalVarReadDeep) SetNeedsGuard(b bool) ProducingAnnotationTrigger {
+func (v *LocalVarReadDeep) SetNeedsGuard(b bool) {
 	v.NeedsGuard = b
-	return v
 }
 
 // GlobalVarReadDeep is when a value is determined to flow from the deep Annotation of a global variable
@@ -1335,9 +1327,8 @@ func (g GlobalVarReadDeepPrestring) String() string {
 func (g *GlobalVarReadDeep) NeedsGuardMatch() bool { return g.NeedsGuard }
 
 // SetNeedsGuard for a GlobalVarReadDeep writes the field NeedsGuard
-func (g *GlobalVarReadDeep) SetNeedsGuard(b bool) ProducingAnnotationTrigger {
+func (g *GlobalVarReadDeep) SetNeedsGuard(b bool) {
 	g.NeedsGuard = b
-	return g
 }
 
 // GuardMissing is when a value is determined to flow from a site that requires a guard,
