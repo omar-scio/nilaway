@@ -76,16 +76,16 @@ func (t *FullTrigger) truncatedProducerPos(pass *analysis.Pass) token.Position {
 	return util.PosToLocation(t.Producer.Expr.Pos(), pass)
 }
 
-// Equals returns true if the two passed FullTriggers are equal, and false otherwise.
-func (t *FullTrigger) Equals(other FullTrigger) bool {
+// equals returns true if the two passed FullTriggers are equal, and false otherwise.
+func (t *FullTrigger) equals(other FullTrigger) bool {
 	return t.Producer.Annotation.equals(other.Producer.Annotation) &&
 		t.Consumer.Annotation.equals(other.Consumer.Annotation) &&
 		t.Consumer.Expr == other.Consumer.Expr &&
 		t.Consumer.GuardMatched == other.Consumer.GuardMatched
 }
 
-// EqualsModuloGuardMatched returns true if the two passed FullTriggers (modulo the GuardMatched field) are equal, and false otherwise.
-func (t *FullTrigger) EqualsModuloGuardMatched(other FullTrigger) bool {
+// equalsModuloGuardMatched returns true if the two passed FullTriggers (modulo the GuardMatched field) are equal, and false otherwise.
+func (t *FullTrigger) equalsModuloGuardMatched(other FullTrigger) bool {
 	return t.Producer.Annotation.equals(other.Producer.Annotation) &&
 		t.Consumer.Annotation.equals(other.Consumer.Annotation) &&
 		t.Consumer.Expr == other.Consumer.Expr
@@ -150,7 +150,7 @@ func FullTriggerSlicesEq(left, right []FullTrigger) bool {
 	matched := make(map[int]bool)
 	for _, l := range left {
 		for j, r := range right {
-			if l.Equals(r) {
+			if l.equals(r) {
 				matched[j] = true
 				break
 			}
@@ -175,7 +175,7 @@ func MergeFullTriggers(left []FullTrigger, right ...FullTrigger) []FullTrigger {
 
 	for i, l := range left {
 		for j, r := range right {
-			if l.EqualsModuloGuardMatched(r) {
+			if l.equalsModuloGuardMatched(r) {
 				if l.Consumer.GuardMatched && !r.Consumer.GuardMatched {
 					updateLeftGuard[i] = true
 				} else {

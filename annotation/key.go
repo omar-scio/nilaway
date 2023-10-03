@@ -40,8 +40,8 @@ type Key interface {
 	// a good guideline would be the length of their name plus no more than 10 characters
 	String() string
 
-	// Equals returns true if the passed key is equal to this key
-	Equals(Key) bool
+	// equals returns true if the passed key is equal to this key
+	equals(Key) bool
 }
 
 // FieldAnnotationKey allows the Lookup of a field's Annotation in the Annotation map
@@ -62,8 +62,8 @@ func (k *FieldAnnotationKey) Object() types.Object {
 	return k.FieldDecl
 }
 
-// Equals returns true if the passed key is equal to this key
-func (k *FieldAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (k *FieldAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*FieldAnnotationKey); ok {
 		return *k == *other
 	}
@@ -107,8 +107,8 @@ func (pk *CallSiteParamAnnotationKey) Object() types.Object {
 	return pk.FuncDecl
 }
 
-// Equals returns true if the passed key is equal to this key
-func (pk *CallSiteParamAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (pk *CallSiteParamAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*CallSiteParamAnnotationKey); ok {
 		return *pk == *other
 	}
@@ -233,8 +233,8 @@ func (pk *ParamAnnotationKey) Object() types.Object {
 	return pk.FuncDecl
 }
 
-// Equals returns true if the passed key is equal to this key
-func (pk *ParamAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (pk *ParamAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*ParamAnnotationKey); ok {
 		return *pk == *other
 	}
@@ -294,8 +294,8 @@ func (rk *CallSiteRetAnnotationKey) Object() types.Object {
 	return rk.FuncDecl
 }
 
-// Equals returns true if the passed key is equal to this key
-func (rk *CallSiteRetAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (rk *CallSiteRetAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*CallSiteRetAnnotationKey); ok {
 		return *rk == *other
 	}
@@ -336,8 +336,8 @@ func (rk *RetAnnotationKey) Object() types.Object {
 	return rk.FuncDecl
 }
 
-// Equals returns true if the passed key is equal to this key
-func (rk *RetAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (rk *RetAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*RetAnnotationKey); ok {
 		return *rk == *other
 	}
@@ -375,8 +375,8 @@ func (tk *TypeNameAnnotationKey) Object() types.Object {
 	return tk.TypeDecl
 }
 
-// Equals returns true if the passed key is equal to this key
-func (tk *TypeNameAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (tk *TypeNameAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*TypeNameAnnotationKey); ok {
 		return *tk == *other
 	}
@@ -405,8 +405,8 @@ func (gk *GlobalVarAnnotationKey) Object() types.Object {
 	return gk.VarDecl
 }
 
-// Equals returns true if the passed key is equal to this key
-func (gk *GlobalVarAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (gk *GlobalVarAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*GlobalVarAnnotationKey); ok {
 		return *gk == *other
 	}
@@ -441,8 +441,8 @@ func (rf *RetFieldAnnotationKey) Object() types.Object {
 	return rf.FuncDecl
 }
 
-// Equals returns true if the passed key is equal to this key
-func (rf *RetFieldAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (rf *RetFieldAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*RetFieldAnnotationKey); ok {
 		return *rf == *other
 	}
@@ -492,8 +492,8 @@ func (ek *EscapeFieldAnnotationKey) Object() types.Object {
 	return ek.FieldDecl
 }
 
-// Equals returns true if the passed key is equal to this key
-func (ek *EscapeFieldAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (ek *EscapeFieldAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*EscapeFieldAnnotationKey); ok {
 		return *ek == *other
 	}
@@ -552,8 +552,8 @@ func (pf *ParamFieldAnnotationKey) Object() types.Object {
 	return pf.FuncDecl
 }
 
-// Equals returns true if the passed key is equal to this key
-func (pf *ParamFieldAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (pf *ParamFieldAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*ParamFieldAnnotationKey); ok {
 		return *pf == *other
 	}
@@ -609,8 +609,8 @@ func (rk *RecvAnnotationKey) Exported() bool {
 	return rk.FuncDecl.Exported()
 }
 
-// Equals returns true if the passed key is equal to this key
-func (rk *RecvAnnotationKey) Equals(other Key) bool {
+// equals returns true if the passed key is equal to this key
+func (rk *RecvAnnotationKey) equals(other Key) bool {
 	if other, ok := other.(*RecvAnnotationKey); ok {
 		return *rk == *other
 	}

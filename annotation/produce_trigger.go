@@ -111,7 +111,7 @@ func (t *TriggerIfNilable) UnderlyingSite() Key { return t.Ann }
 // equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (t *TriggerIfNilable) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*TriggerIfNilable); ok {
-		return t.Ann.Equals(other.Ann) && t.NeedsGuard == other.NeedsGuard
+		return t.Ann.equals(other.Ann) && t.NeedsGuard == other.NeedsGuard
 	}
 	return false
 }
@@ -159,7 +159,7 @@ func (t *TriggerIfDeepNilable) UnderlyingSite() Key { return t.Ann }
 // equals returns true if the passed ProducingAnnotationTrigger is equal to this one
 func (t *TriggerIfDeepNilable) equals(other ProducingAnnotationTrigger) bool {
 	if other, ok := other.(*TriggerIfDeepNilable); ok {
-		return t.Ann.Equals(other.Ann) && t.NeedsGuard == other.NeedsGuard
+		return t.Ann.equals(other.Ann) && t.NeedsGuard == other.NeedsGuard
 	}
 	return false
 }
@@ -191,7 +191,7 @@ func (*ProduceTriggerTautology) Prestring() Prestring {
 type ProduceTriggerTautologyPrestring struct{}
 
 func (ProduceTriggerTautologyPrestring) String() string {
-	return "is nil"
+	return "nilable value"
 }
 
 // Kind returns Always.
