@@ -630,7 +630,7 @@ buildShadowMask:
 		}
 		if consumeTrigger != nil {
 			rootNode.AddConsumption(&annotation.ConsumeTrigger{
-				Annotation: consumeTrigger.SetNeedsGuard(true),
+				Annotation: consumeTrigger,
 				Expr:       rhsVal,
 				Guards:     util.NoGuards(),
 			})
