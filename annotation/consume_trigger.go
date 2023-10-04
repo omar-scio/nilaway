@@ -56,6 +56,10 @@ type ConsumingAnnotationTrigger interface {
 
 	// NeedsGuard returns true if the trigger needs to be guarded, for example, by a nil check or an ok form.
 	NeedsGuard() bool
+
+	// SetNeedsGuard sets the underlying Guard-Neediness of this ConsumerTrigger, if present
+	// This should be very sparingly used, and only with utter conviction of correctness
+	SetNeedsGuard(bool)
 }
 
 // Prestring is an interface used to encode objects that have compact on-the-wire encodings
@@ -67,7 +71,8 @@ type Prestring interface {
 
 // TriggerIfNonNil is triggered if the contained Annotation is non-nil
 type TriggerIfNonNil struct {
-	Ann Key
+	Ann              Key
+	IsGuardNotNeeded bool
 }
 
 // Kind returns Conditional.
@@ -87,7 +92,12 @@ func (t *TriggerIfNonNil) CheckConsume(annMap Map) bool {
 func (*TriggerIfNonNil) customPos() (token.Pos, bool) { return token.NoPos, false }
 
 // NeedsGuard default implementation for TriggerIfNonNil. To return non-default value, this method should be overridden.
-func (*TriggerIfNonNil) NeedsGuard() bool { return true }
+func (t *TriggerIfNonNil) NeedsGuard() bool { return !t.IsGuardNotNeeded }
+
+// SetNeedsGuard default implementation for TriggerIfNonNil. To return non-default value, this method should be overridden.
+func (t *TriggerIfNonNil) SetNeedsGuard(b bool) {
+	t.IsGuardNotNeeded = !b
+}
 
 // equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
 func (t *TriggerIfNonNil) equals(other ConsumingAnnotationTrigger) bool {
@@ -111,7 +121,8 @@ func (TriggerIfNonNilPrestring) String() string {
 
 // TriggerIfDeepNonNil is triggered if the contained Annotation is deeply non-nil
 type TriggerIfDeepNonNil struct {
-	Ann Key
+	Ann              Key
+	IsGuardNotNeeded bool
 }
 
 // Kind returns DeepConditional.
@@ -131,7 +142,12 @@ func (t *TriggerIfDeepNonNil) CheckConsume(annMap Map) bool {
 func (*TriggerIfDeepNonNil) customPos() (token.Pos, bool) { return token.NoPos, false }
 
 // NeedsGuard default implementation for TriggerIfDeepNonNil. To return non-default value, this method should be overridden.
-func (*TriggerIfDeepNonNil) NeedsGuard() bool { return true }
+func (t *TriggerIfDeepNonNil) NeedsGuard() bool { return !t.IsGuardNotNeeded }
+
+// SetNeedsGuard sets the underlying Guard-Neediness of this ConsumerTrigger, if present
+func (t *TriggerIfDeepNonNil) SetNeedsGuard(b bool) {
+	t.IsGuardNotNeeded = !b
+}
 
 // equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
 func (t *TriggerIfDeepNonNil) equals(other ConsumingAnnotationTrigger) bool {
@@ -154,7 +170,9 @@ func (TriggerIfDeepNonNilPrestring) String() string {
 }
 
 // ConsumeTriggerTautology is used at consumption sites were consuming nil is always an error
-type ConsumeTriggerTautology struct{}
+type ConsumeTriggerTautology struct {
+	IsGuardNotNeeded bool
+}
 
 // Kind returns Always.
 func (*ConsumeTriggerTautology) Kind() TriggerKind { return Always }
@@ -172,7 +190,12 @@ func (*ConsumeTriggerTautology) CheckConsume(Map) bool {
 func (*ConsumeTriggerTautology) customPos() (token.Pos, bool) { return token.NoPos, false }
 
 // NeedsGuard default implementation for ConsumeTriggerTautology. To return non-default value, this method should be overridden.
-func (*ConsumeTriggerTautology) NeedsGuard() bool { return true }
+func (c *ConsumeTriggerTautology) NeedsGuard() bool { return !c.IsGuardNotNeeded }
+
+// SetNeedsGuard sets the underlying Guard-Neediness of this ConsumerTrigger, if present
+func (c *ConsumeTriggerTautology) SetNeedsGuard(b bool) {
+	c.IsGuardNotNeeded = !b
+}
 
 // equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
 func (*ConsumeTriggerTautology) equals(other ConsumingAnnotationTrigger) bool {
