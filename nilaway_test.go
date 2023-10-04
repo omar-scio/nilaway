@@ -46,7 +46,7 @@ func TestTesting(t *testing.T) {
 	t.Parallel()
 
 	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, Analyzer, "go.uber.org/testing")
+	analysistest.Run(t, testdata, Analyzer, "go.uber.org/testing", "go.uber.org/testing/inference")
 }
 
 func TestErrorReturn(t *testing.T) {

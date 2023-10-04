@@ -629,6 +629,10 @@ buildShadowMask:
 			return err
 		}
 		if consumeTrigger != nil {
+			// No need to guard at the assignment site. Remove requirement for guard here from the consumer.
+			// E.g., `s.S, ok = mp[0]` should not require a guard on `s.S` because `ok` is yet to be checked for its truth value.
+			consumeTrigger.SetNeedsGuard(false)
+
 			rootNode.AddConsumption(&annotation.ConsumeTrigger{
 				Annotation: consumeTrigger,
 				Expr:       rhsVal,
