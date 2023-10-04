@@ -54,8 +54,8 @@ type ConsumingAnnotationTrigger interface {
 	// equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
 	equals(ConsumingAnnotationTrigger) bool
 
-	// NeedsGuarding returns true if the trigger needs to be guarded, for example, by a nil check or an ok form.
-	NeedsGuarding() bool
+	// NeedsGuard returns true if the trigger needs to be guarded, for example, by a nil check or an ok form.
+	NeedsGuard() bool
 }
 
 // Prestring is an interface used to encode objects that have compact on-the-wire encodings
@@ -86,8 +86,8 @@ func (t *TriggerIfNonNil) CheckConsume(annMap Map) bool {
 // To return non-default position values, this method should be overridden appropriately.
 func (*TriggerIfNonNil) customPos() (token.Pos, bool) { return token.NoPos, false }
 
-// NeedsGuarding default implementation for TriggerIfNonNil. To return non-default value, this method should be overridden.
-func (*TriggerIfNonNil) NeedsGuarding() bool { return true }
+// NeedsGuard default implementation for TriggerIfNonNil. To return non-default value, this method should be overridden.
+func (*TriggerIfNonNil) NeedsGuard() bool { return true }
 
 // equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
 func (t *TriggerIfNonNil) equals(other ConsumingAnnotationTrigger) bool {
@@ -130,8 +130,8 @@ func (t *TriggerIfDeepNonNil) CheckConsume(annMap Map) bool {
 // To return non-default position values, this method should be overridden appropriately.
 func (*TriggerIfDeepNonNil) customPos() (token.Pos, bool) { return token.NoPos, false }
 
-// NeedsGuarding default implementation for TriggerIfDeepNonNil. To return non-default value, this method should be overridden.
-func (*TriggerIfDeepNonNil) NeedsGuarding() bool { return true }
+// NeedsGuard default implementation for TriggerIfDeepNonNil. To return non-default value, this method should be overridden.
+func (*TriggerIfDeepNonNil) NeedsGuard() bool { return true }
 
 // equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
 func (t *TriggerIfDeepNonNil) equals(other ConsumingAnnotationTrigger) bool {
@@ -171,8 +171,8 @@ func (*ConsumeTriggerTautology) CheckConsume(Map) bool {
 // To return non-default position values, this method should be overridden appropriately.
 func (*ConsumeTriggerTautology) customPos() (token.Pos, bool) { return token.NoPos, false }
 
-// NeedsGuarding default implementation for ConsumeTriggerTautology. To return non-default value, this method should be overridden.
-func (*ConsumeTriggerTautology) NeedsGuarding() bool { return true }
+// NeedsGuard default implementation for ConsumeTriggerTautology. To return non-default value, this method should be overridden.
+func (*ConsumeTriggerTautology) NeedsGuard() bool { return true }
 
 // equals returns true if the passed ConsumingAnnotationTrigger is equal to this one
 func (*ConsumeTriggerTautology) equals(other ConsumingAnnotationTrigger) bool {
