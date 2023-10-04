@@ -304,7 +304,7 @@ func backpropAcrossAssignment(rootNode *RootAssertionNode, lhs, rhs []ast.Expr) 
 			// Map read
 			if r, ok := rhsNode.(*ast.IndexExpr); ok {
 				rootNode.AddGuardMatch(r.X, ProduceAsNonnil)
-				return backpropAcrossOneToOneAssignment(rootNode, lhs[0:1], rhs)
+				return backpropAcrossOneToOneAssignment(rootNode, lhs[0:1], rhs, true /* isFromRichCheckEffectAnalysis */)
 			}
 
 			// Channel read
@@ -337,7 +337,7 @@ func backpropAcrossAssignment(rootNode *RootAssertionNode, lhs, rhs []ast.Expr) 
 			// Type assertion
 			if r, ok := rhsNode.(*ast.TypeAssertExpr); ok && r.Type != nil {
 				// TODO: properly handle type assertions' "OK" contract
-				return backpropAcrossOneToOneAssignment(rootNode, lhs[0:1], rhs)
+				return backpropAcrossOneToOneAssignment(rootNode, lhs[0:1], rhs, true /* isFromRichCheckEffectAnalysis */)
 			}
 		}
 	}
@@ -345,7 +345,7 @@ func backpropAcrossAssignment(rootNode *RootAssertionNode, lhs, rhs []ast.Expr) 
 	// If the above code did not catch any special cases, it means this assignment is a normal
 	// assignment, and we further delegate the handling to other functions.
 	if len(lhs) == len(rhs) {
-		return backpropAcrossOneToOneAssignment(rootNode, lhs, rhs)
+		return backpropAcrossOneToOneAssignment(rootNode, lhs, rhs, false /* isFromRichCheckEffectAnalysis */)
 	}
 	return backpropAcrossManyToOneAssignment(rootNode, lhs, rhs)
 }
@@ -484,7 +484,7 @@ func backpropAcrossTypeSwitch(rootNode *RootAssertionNode, lhs *ast.Ident, rhs a
 // "var a, b, c *int = d, e, f"), it is designed to be called from backpropAcrossAssignment as a
 // finer-grained handler for one-to-one normal assignments.
 // nonnil(lhs, rhs)
-func backpropAcrossOneToOneAssignment(rootNode *RootAssertionNode, lhs, rhs []ast.Expr) error {
+func backpropAcrossOneToOneAssignment(rootNode *RootAssertionNode, lhs, rhs []ast.Expr, isFromRichCheckEffectAnalysis bool) error {
 	n := len(lhs)
 
 	// precompute the parses of all LHS expressions - we'll need them
@@ -629,9 +629,11 @@ buildShadowMask:
 			return err
 		}
 		if consumeTrigger != nil {
-			// No need to guard at the assignment site. Remove requirement for guard here from the consumer.
-			// E.g., `s.S, ok = mp[0]` should not require a guard on `s.S` because `ok` is yet to be checked for its truth value.
-			consumeTrigger.SetNeedsGuard(false)
+			if isFromRichCheckEffectAnalysis {
+				// No need to guard at the assignment site. Remove requirement for guard here from the consumer.
+				// E.g., `s.S, ok = mp[0]` should not require a guard on `s.S` because `ok` is yet to be checked for its truth value.
+				consumeTrigger.SetNeedsGuard(false)
+			}
 
 			rootNode.AddConsumption(&annotation.ConsumeTrigger{
 				Annotation: consumeTrigger,

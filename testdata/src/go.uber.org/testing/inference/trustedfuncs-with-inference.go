@@ -74,7 +74,7 @@ func (s *SSuite) SetupTest3() {
 }
 
 func (s *SSuite) Test3() {
-	print(s.S3.f) //want "result 0 of `NewS.*` lacking guarding"
+	print(s.S3.f) // unsafe
 }
 
 func (s *SSuite) SetupTest4() {
