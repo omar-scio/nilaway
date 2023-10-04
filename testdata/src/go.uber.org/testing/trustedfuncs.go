@@ -19,10 +19,6 @@ This package aims to test any nilaway behavior specific to accomdating tests, su
 */
 package testing
 
-// import (
-// 	"go.uber.org/testing/github.com/stretchr/testify/suite"
-// )
-
 import (
 	"go.uber.org/testing/github.com/stretchr/testify/assert"
 	"go.uber.org/testing/github.com/stretchr/testify/require"
