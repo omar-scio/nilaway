@@ -698,13 +698,7 @@ func backpropAcrossManyToOneAssignment(rootNode *RootAssertionNode, lhs, rhs []a
 			if !util.ExprBarsNilness(rootNode.Pass(), lhsVal) {
 				// No need to guard at the assignment site. Remove requirement for guard here.
 				// E.g., `s.S, err = f()` should not require a guard on `s.S` because `err` is yet to be checked for nilness
-				if _, ok := consumeTrigger.(annotation.FldAssign); ok {
-					if ident, ok := rhsVal.Fun.(*ast.Ident); ok {
-						if util.FuncIsErrReturning(rootNode.ObjectOf(ident).(*types.Func)) {
-							consumeTrigger = consumeTrigger.SetNeedsGuard(false)
-						}
-					}
-				}
+				consumeTrigger.SetNeedsGuard(false)
 
 				rootNode.AddNewTriggers(annotation.FullTrigger{
 					Producer: &annotation.ProduceTrigger{
