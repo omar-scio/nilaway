@@ -39,75 +39,51 @@ func NewS() (*S, error) {
 
 type SSuite struct {
 	suite.Suite
-	S1 *S
-	S2 *S
-	S3 *S
-	S4 *S
-	S5 *S
+	S *S
 }
 
-func (s *SSuite) SetupTest1() {
+func (s *SSuite) testErrorRetFunction(i int) {
 	var err error
-	s.S1, err = NewS()
-	s.NoError(err)
-	print(s.S1.f) // safe
+
+	switch i {
+	case 0:
+		s.S, err = NewS()
+		s.NoError(err)
+		print(s.S.f) // safe
+
+	case 1:
+		s.S, err = NewS()
+		print(s.S.f) //want "lacking guarding"
+		s.Nil(err)
+		print(s.S.f) // safe
+
+	case 2:
+		s.S, _ = NewS()
+		print(s.S.f) //want "result 0 of `NewS.*` lacking guarding"
+
+	case 3:
+		temp, err := NewS()
+		s.NoError(err)
+		s.S = temp
+		print(s.S.f) // safe
+
+	case 4:
+		var err1, err2 error
+		s.S, err1 = NewS()
+		s.NoError(err2)
+		_ = err1
+		print(s.S.f) //want "result 0 of `NewS.*` lacking guarding"
+	}
 }
 
-func (s *SSuite) Test1() {
-	print(s.S1.f) // safe
-}
-
-func (s *SSuite) SetupTest2() {
-	var err error
-	s.S2, err = NewS()
-	print(s.S2.f) //want "lacking guarding"
-	s.Nil(err)
-}
-
-func (s *SSuite) Test2() {
-	print(s.S2.f) // safe
-}
-
-func (s *SSuite) SetupTest3() {
-	s.S3, _ = NewS()
-	print(s.S3.f) //want "result 0 of `NewS.*` lacking guarding"
-}
-
-func (s *SSuite) Test3() {
-	print(s.S3.f) // unsafe
-}
-
-func (s *SSuite) SetupTest4() {
-	temp, err := NewS()
-	s.NoError(err)
-	s.S4 = temp
-	print(s.S4.f) // safe
-}
-
-func (s *SSuite) Test4() {
-	print(s.S4.f) // safe
-}
-
-func (s *SSuite) SetupTest5() {
-	var err1, err2 error
-	s.S5, err1 = NewS()
-	s.NoError(err2)
-	_ = err1
-	print(s.S5.f) //want "result 0 of `NewS.*` lacking guarding"
-}
-
-func (s *SSuite) Test5() {
-	print(s.S5.f) // unsafe
-}
-
-// Below test checks for field assignment via a map lookup.
+// Below test checks for field assignment via map lookup.
 type T struct {
 	suite.Suite
 	f1 *int
 	f2 *int
 }
 
-func (t *T) SetupTest1(mp map[int]*int, i int) {
+func (t *T) testMapRead(mp map[int]*int, i int) {
 	var ok bool
 	t.f1, ok = mp[0]
 	t.True(ok)
@@ -119,23 +95,36 @@ func (t *T) SetupTest1(mp map[int]*int, i int) {
 	print(*t.f2)
 }
 
-func (t *T) Test1() {
-	print(*t.f1) // safe
-	print(*t.f2) // safe
+type M struct {
+	suite.Suite
+	mp map[int]*int
 }
 
-// type M struct {
-// 	suite.Suite
-// 	mp map[int]*string
-// }
-//
-// func (m *M) SetupTest2(localMap map[string]*string) {
-// 	var ok bool
-// 	m.mp[0], ok = localMap["abc"]
-// 	m.True(ok)
-// 	print(*m.mp[0]) // safe
-// }
-//
-// func (m *M) TestField2() {
-// 	print(*m.mp[0]) // safe
-// }
+func (m *M) testFieldMapAssign(mp map[int]*int, i int) {
+	var ok bool
+	m.mp[0], ok = mp[0]
+	m.True(ok)
+	print(*m.mp[0]) // safe
+
+	// `mp[i]` is not considered to be a stable expression, hence an error would be reported despite the ok check.
+	m.mp[i], ok = mp[0]
+	m.True(ok)
+	print(*m.mp[i]) //want "deep read from field `mp` lacking guarding"
+}
+
+// Below test checks for field assignment via channel receive.
+type C struct {
+	suite.Suite
+	f *int
+}
+
+func (c *C) testChannelRecv(ch chan *int) {
+	var ok bool
+	c.f, ok = <-ch
+
+	c.False(ok)
+	print(*c.f) //want "deep read from parameter `ch` lacking guarding"
+
+	c.True(ok)
+	print(*c.f) // safe
+}
