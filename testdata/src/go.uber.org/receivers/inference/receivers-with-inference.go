@@ -129,6 +129,24 @@ func (*A) nonnamedPointer() {}
 
 func (A) nonNamedNonPointer() {}
 
+type myInt int
+
+func (*myInt) String() string {
+	return ""
+}
+
+func (m *myInt) namedPointer() {
+	_ = *m //want "dereferenced"
+}
+
+func (m myInt) namedNonPointer() {
+	_ = m.String()
+}
+
+func (*myInt) blankPointer() {}
+
+func (myInt) blankNonPointer() {}
+
 func testBlankAndNonPointerReceivers() {
 	var s1, s2, s3, s4 *A
 	s1.namedPointer()    // safe at call site
@@ -137,6 +155,15 @@ func testBlankAndNonPointerReceivers() {
 	// below two non-pointer cases are not safe at call site
 	s3.namedNonpointer()    //want "unassigned variable"
 	s4.nonNamedNonPointer() //want "unassigned variable"
+
+	// same tests as above, but user-defined named types
+	var m1, m2, m3, m4 *myInt
+	m1.namedPointer() // safe at call site
+	m2.blankPointer() // safe at call site
+
+	// below two non-pointer cases are not safe at call site
+	m3.namedNonPointer() //want "unassigned variable"
+	m4.blankNonPointer() //want "unassigned variable"
 }
 
 type myErr struct{}
