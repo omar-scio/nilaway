@@ -186,3 +186,68 @@ func testBlankAndNonPointerReceiversForLibraryMethods() {
 	e.errField = &myErr{}
 	print(e.errField.Error()) // safe
 }
+
+// -----------------------------------
+// below tests check for pointer receivers and their pointer and non-pointer callers. In the case of non-pointer callers,
+// Go handles this specially with automatic conversion of a non-pointer caller to a pointer type at the receiver site,
+// leading to no nil panic in the method body on dereferencing the receiver. The below tests check for this behavior.
+
+type StringMap map[string]*string
+
+func (m *StringMap) foo() {
+	_ = *m //want "unassigned variable `.*` used as receiver"
+}
+
+func retNilStringMap() StringMap {
+	return nil
+}
+
+type StringSlice []*string
+
+func (s *StringSlice) foo() {
+	_ = *s //want "unassigned variable `.*` used as receiver"
+}
+
+func retNilStringSlice() StringSlice {
+	return nil
+}
+
+type T struct {
+	f int
+}
+
+func (t *T) foo() {
+	_ = *t
+}
+
+func testCallerForPointerReceiver() {
+	// test named map type
+	strMap1 := retNilStringMap()
+	strMap1.foo() // safe
+
+	var strMap2 StringMap
+	strMap2.foo() // safe
+
+	var strMap3 *StringMap
+	strMap3.foo() // unsafe; nil caller
+
+	var strMap4 StringMap = nil
+	strMap4.foo() // safe
+
+	// test named slice type
+	strSlice1 := retNilStringSlice()
+	strSlice1.foo() // safe
+
+	var strSlice2 StringSlice
+	strSlice2.foo() // safe
+
+	var strSlice3 *StringSlice
+	strSlice3.foo() // unsafe; nil caller
+
+	var strSlice4 StringSlice = nil
+	strSlice4.foo() // safe
+
+	// test struct type
+	var t T
+	t.foo() // safe
+}

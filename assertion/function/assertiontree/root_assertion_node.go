@@ -754,17 +754,25 @@ func (r *RootAssertionNode) AddComputation(expr ast.Expr) {
 					// Here, `t` can only be of type struct or interface, of which we only support for structs.
 					if !util.TypeIsDeeplyInterface(t) { // Check 4: invoking expression (caller) is of a non-interface type (e.g., struct or named)
 						allowNilable = true
-						// We are in the special case of supporting nilable receivers! Can be nilable depending on declaration annotation/inferred nilability.
-						r.AddConsumption(&annotation.ConsumeTrigger{
-							Annotation: &annotation.RecvPass{
-								TriggerIfNonNil: &annotation.TriggerIfNonNil{
-									Ann: &annotation.RecvAnnotationKey{
-										FuncDecl: funcObj,
-									},
-								}},
-							Expr:   expr.X,
-							Guards: util.NoGuards(),
-						})
+						// We only create a consume trigger if the caller is a pointer type, otherwise we don't need to.
+						// This is because if method has a pointer receiver, but the caller is a non-pointer value,
+						// then Go automatically converts it to a pointer when calling a method on it (e.g., `s.foo()`
+						// is converted to `(&s).foo()` when `s` is a non-pointer). This means that we don't need to
+						// check for nilability of the receiver or the caller, since it cannot nil panic at the call
+						// site nor inside the method body when dereferencing the receiver.
+						if util.TypeIsDeeplyPtr(t) {
+							// We are in the special case of supporting nilable receivers! Can be nilable depending on declaration annotation/inferred nilability.
+							r.AddConsumption(&annotation.ConsumeTrigger{
+								Annotation: &annotation.RecvPass{
+									TriggerIfNonNil: &annotation.TriggerIfNonNil{
+										Ann: &annotation.RecvAnnotationKey{
+											FuncDecl: funcObj,
+										},
+									}},
+								Expr:   expr.X,
+								Guards: util.NoGuards(),
+							})
+						}
 					}
 				} else { // Check 5: invoked method is out of scope
 					// We are setting an optimistic default here for methods out of scope, specifically to avoid
