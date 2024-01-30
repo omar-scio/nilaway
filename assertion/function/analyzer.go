@@ -474,7 +474,7 @@ func analyzeFunc(
 
 	mu.Lock()
 	defer mu.Unlock()
-	f, err := os.OpenFile("nilaway_timeout", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	f, err := os.OpenFile("/tmp/nilaway_timeout", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		panic(err)
 	}
