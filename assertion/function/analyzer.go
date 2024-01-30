@@ -17,9 +17,11 @@ package function
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/types"
+	"os"
 	"reflect"
 	"runtime/debug"
 	"strings"
@@ -436,6 +438,8 @@ func hasOnlyNonNilToNonNilContract(funcContracts functioncontracts.Map, funcObj 
 		len(ctr.Outs) == 1 && ctr.Outs[0] == functioncontracts.NonNil
 }
 
+var mu sync.Mutex
+
 // analyzeFunc analyzes a given function declaration and emit generated triggers, or an error if
 // something went wrong during the analysis. It is mainly a wrapper function for
 // assertiontree.BackpropAcrossFunc with synchronization and communication support for concurrency.
@@ -468,8 +472,22 @@ func analyzeFunc(
 	// Do the actual backpropagation.
 	funcTriggers, err := assertiontree.BackpropAcrossFunc(ctx, pass, funcDecl, funcContext, graph)
 
+	mu.Lock()
+	defer mu.Unlock()
+	f, err := os.OpenFile("nilaway_timeout", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
 	// If any error occurs in back-propagating the function, we wrap the error with more information.
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			_, err = f.WriteString(fmt.Sprintf("timeout in function %s from pkg %q\n", funcDecl.Name, pass.Pkg.Path()))
+			if err != nil {
+				panic(err)
+			}
+		}
 		pos := pass.Fset.Position(funcDecl.Pos())
 		err = fmt.Errorf("analyzing function %s at %s:%d.%d: %w", funcDecl.Name, pos.Filename, pos.Line, pos.Column, err)
 	}
