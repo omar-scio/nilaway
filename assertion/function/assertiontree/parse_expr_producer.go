@@ -327,18 +327,13 @@ func (r *RootAssertionNode) ParseExprAsProducer(expr ast.Expr, doNotTrack bool) 
 		}
 		if recv != nil {
 			// receiver is trackable
-			if r.isStable(expr.Index) {
-				// receiver is trackable and index is stable, so return an augmented path
-				return append(recv, &indexAssertionNode{
-					index:    expr.Index,
-					valType:  r.Pass().TypesInfo.Types[expr].Type,
-					recvType: r.Pass().TypesInfo.Types[expr.X].Type,
-				}), nil
-			}
-			// index is non-literal, so the expression is not trackable, just return nilable for index without check
-			return nil, parseDeepRead(recv, expr.X, expr, rproducers)
+			return append(recv, &indexAssertionNode{
+				index:    expr.Index,
+				valType:  r.Pass().TypesInfo.Types[expr].Type,
+				recvType: r.Pass().TypesInfo.Types[expr.X].Type,
+			}), nil
 		}
-		// reciever is non-trackable, just return nilable for index without check
+		// receiver is non-trackable, just return nilable for index without check
 		return nil, parseDeepRead(recv, expr.X, expr, rproducers)
 	case *ast.SliceExpr:
 		switch {

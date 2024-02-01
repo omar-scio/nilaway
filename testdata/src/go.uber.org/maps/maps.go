@@ -692,3 +692,95 @@ func testExplicitBool(mp map[int]*int, i int) *int {
 	}
 	return &i
 }
+
+// tests for checking non-literal map accesses
+
+func retInt() int {
+	return 0
+}
+
+type S struct {
+	f int
+	g int
+}
+
+// nonnil(mp, mp[])
+func testNonLiteralMapAccess(mp map[int]*int, i, j int) {
+	switch i {
+	case 0:
+		if mp[i] != nil {
+			print(*mp[i])
+		}
+
+	case 1:
+		if mp[i] == nil {
+			return
+		}
+		print(*mp[i])
+
+	case 3:
+		if mp[i] != nil {
+			i := 10
+			print(*mp[i]) //want "lacking guarding"
+		}
+
+	case 4:
+		if mp[i] != nil {
+			print(*mp[j]) //want "lacking guarding"
+		}
+
+	case 5:
+		localVar := 0
+		if mp[localVar] != nil {
+			print(mp[localVar])
+		}
+
+	case 6:
+		s := &S{}
+		if mp[s.f] != nil {
+			print(*mp[s.f])
+		}
+
+	case 7:
+		s1 := &S{}
+		s2 := &S{}
+		if mp[s1.f] != nil {
+			print(*mp[s2.f]) //want "lacking guarding"
+		}
+
+	case 8:
+		s := &S{}
+		if mp[s.f] != nil {
+			print(*mp[s.g]) //want "lacking guarding"
+		}
+
+	case 9:
+		var sl []*int
+		if mp[len(sl)] != nil {
+			print(*mp[len(sl)])
+		}
+
+	case 10:
+		// NilAway does not consider user-defined functions as stable, and hence reports an error here. It could be
+		// considered a false positive from a user perspective, but NilAway cannot guarantee the stability of the function
+		// without a more complex analysis. We are currently not choosing to do this since we believe this to be a rare
+		// case and also an anti-pattern since users should ideally create a local variable and use that instead.
+		if mp[retInt()] != nil {
+			print(*mp[retInt()]) //want "lacking guarding"
+		}
+
+		localVar := retInt()
+		if mp[localVar] != nil {
+			print(*mp[localVar])
+		}
+
+	case 80:
+		// TODO: This case is currently a false negative since NilAway does not track the value of `i` across consecutive
+		//  map accesses. We plan to support this in a follow-up PR.
+		i = 0
+		if mp[i] != nil {
+			i = 100
+			print(*mp[i]) // TODO: report error here
+		}
+	}
+}
