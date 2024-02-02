@@ -31,6 +31,13 @@ func retNilSometimes() *int {
 	return new(int)
 }
 
+func retNilSometimes2() *int {
+	if dummy {
+		return nil
+	}
+	return new(int)
+}
+
 func testLocalDeepAssignNil(i int) {
 	switch i {
 	case 0:
@@ -56,11 +63,10 @@ func testLocalDeepAssignNil(i int) {
 		m := make(map[int]*int)
 		m[i] = nil
 		if v, ok := m[i]; ok {
-			_ = *v //want "deep read from local variable `m` dereferenced"
+			_ = *v //want "dereferenced"
 		}
-		// m[i] is not recognized as a stable expression, hence an error is reported here.
 		if m[i] != nil {
-			_ = *m[i] //want "deep read from local variable `m` lacking guarding"
+			_ = *m[i]
 		}
 
 	case 3:
@@ -69,7 +75,7 @@ func testLocalDeepAssignNil(i int) {
 		if v, ok := m[i]; ok && v != nil {
 			_ = *v
 		} else {
-			_ = *v //want "deep read from local variable `m` lacking guarding"
+			_ = *v //want "dereferenced"
 		}
 
 	case 4:
@@ -83,7 +89,7 @@ func testLocalDeepAssignNil(i int) {
 	case 5:
 		sl := make([]*int, 1)
 		sl[i] = nil
-		_ = *sl[i] //want "deep read from local variable `sl` dereferenced"
+		_ = *sl[i] //want "dereferenced"
 
 	case 6:
 		sl := make([]*int, 1)
@@ -92,8 +98,8 @@ func testLocalDeepAssignNil(i int) {
 
 	case 7:
 		sl := make([]*int, 1)
-		sl[i] = retNilSometimes()
-		_ = *sl[i] //want "deep read from local variable `sl` dereferenced"
+		sl[i] = retNilSometimes2()
+		_ = *sl[i] //want "dereferenced"
 
 	case 8:
 		ch := make(chan *int)
